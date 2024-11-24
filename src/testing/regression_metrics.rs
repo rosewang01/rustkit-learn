@@ -46,14 +46,14 @@ impl R2Score {
 pub struct MSE;
 
 impl MSE {
-    /// Computes the R² score between the true values and predictions.
+    /// Computes the MSE between the true values and predictions.
     ///
     /// # Arguments
     /// - `y_true`: The vector of true values.
     /// - `y_pred`: The vector of predicted values.
     ///
     /// # Returns
-    /// - The R² score (coefficient of determination).
+    /// - The MSE (mean squared error).
     ///
     /// # Panics
     /// - If `y_true` and `y_pred` have different lengths.

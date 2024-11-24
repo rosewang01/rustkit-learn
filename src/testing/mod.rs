@@ -1,1 +1,1 @@
-pub mod r2_score;
+pub mod regression_metrics;

@@ -9,6 +9,7 @@ use preprocessing::standard_scaler::StandardScaler;
 use unsupervised::pca::PCA;
 use supervised::ridge_regression::RidgeRegression;
 use preprocessing::simple_imputer::{Imputer, ImputationType};
+use unsupervised::kmeans::{InitMethod, KMeans};
 
 fn main() {
     sample_scaler();
@@ -20,6 +21,8 @@ fn main() {
     sample_r2();
     print!("\n \n");
     sample_imputer();
+    print!("\n \n");
+    sample_kmeans();
 }
 
 fn sample_ridge() {
@@ -161,4 +164,57 @@ fn sample_imputer() {
         }
         Err(e) => eprintln!("Cons imputation error: {}", e),
     }
+}
+
+
+
+fn sample_kmeans() {
+    println!("=============================================================================");
+    println!("R2-SCORE & MSE EXAMPLE");
+    println!("=============================================================================");
+    let data = DMatrix::from_row_slice(
+        10, 
+        3,  
+        &[
+            1.0, 2.0, 3.0, // Point 1
+            1.1, 2.1, 3.1, // Point 2
+            0.9, 1.9, 2.9, // Point 3
+            8.0, 9.0, 10.0, // Point 4
+            8.1, 9.1, 10.1, // Point 5
+            7.9, 8.9, 9.9, // Point 6
+            4.0, 5.0, 6.0, // Point 7
+            4.1, 5.1, 6.1, // Point 8
+            3.9, 4.9, 5.9, // Point 9
+            4.0, 5.0, 6.0, // Point 10
+        ],
+    );
+
+    // Number of clusters
+    let k = 3;
+    println!("{}", data.row(1));
+
+    // Run KMeans with Random initialization
+    let mut kmeans_random = KMeans::new(k, InitMethod::Random, Some(200), Some(10));
+    kmeans_random.fit(&data);
+    let labels_random = kmeans_random.predict(&data).unwrap();
+    let inertia_random = kmeans_random
+        .compute_inertia(&data, &labels_random, kmeans_random.get_centroids().unwrap());
+
+    // Print results for Random initialization
+    println!("Results with Random Initialization:");
+    println!("Labels: {}", labels_random.transpose());
+    println!("Centroids: {}", kmeans_random.get_centroids().unwrap());
+    println!("Total Inertia: {:.4}", inertia_random);
+
+    // Run KMeans with KMeans++ initialization
+    let mut kmeans_plus_plus = KMeans::new(k, InitMethod::KMeansPlusPlus, None, None);
+    let labels_plus_plus = kmeans_plus_plus.fit_predict(&data);
+    let inertia_plus_plus = kmeans_plus_plus
+        .compute_inertia(&data, &labels_plus_plus, kmeans_plus_plus.get_centroids().unwrap());
+
+    // Print results for KMeans++ initialization
+    println!("\nResults with KMeans++ Initialization:");
+    println!("Labels: {}", labels_plus_plus.transpose());
+    println!("Centroids: {}", kmeans_plus_plus.get_centroids().unwrap());
+    println!("Total Inertia: {:.4}", inertia_plus_plus);
 }

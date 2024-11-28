@@ -10,6 +10,18 @@ pub fn python_to_rust_dynamic_vector(array: &PyReadonlyArray1<f64>) -> DVector<f
     DVector::from_row_slice(&elements)
 }
 
+pub fn python_to_rust_dynamic_matric_null(
+    array: &PyReadonlyArray2<Option<f64>>,
+) -> DMatrix<Option<f64>> {
+    // Convert a NumPy array to nalgebra::DMatrix
+    let matrix = array.as_array();
+    let shape = matrix.shape();
+    let rows = shape[0];
+    let cols = shape[1];
+    let elements = matrix.iter().cloned().collect::<Vec<_>>();
+    DMatrix::from_row_slice(rows, cols, &elements)
+}
+
 pub fn python_to_rust_dynamic_matrix(array: &PyReadonlyArray2<f64>) -> DMatrix<f64> {
     // Convert a NumPy array to nalgebra::DMatrix
     let matrix = array.as_array();

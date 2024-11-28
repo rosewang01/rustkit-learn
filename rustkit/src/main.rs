@@ -92,11 +92,11 @@ fn sample_scaler() {
     );
 
     let mut scaler = StandardScaler::new();
-    let standardized_data = scaler.fit_transform(&data);
+    let standardized_data = scaler.fit_transform_helper(&data);
 
     println!("Standardized Data:\n{}", standardized_data);
 
-    let original_data = scaler.inverse_transform(&standardized_data);
+    let original_data = scaler.inverse_transform_helper(&standardized_data);
     println!(
         "Original Data (after inverse transform):\n{}",
         original_data
@@ -160,14 +160,14 @@ fn sample_imputer() {
 
     let imputer_mean = Imputer::new(ImputationType::Mean);
     let imputer_cons = Imputer::new(ImputationType::Constant(-1.0));
-    match imputer_mean.fit_transform(&data) {
+    match imputer_mean.fit_transform_helper(&data) {
         Ok(imputed_data) => {
             println!("Original data:\n{:?}", data);
             println!("Mean imputed data:\n{}", imputed_data);
         }
         Err(e) => eprintln!("Mean imputation error: {}", e),
     }
-    match imputer_cons.fit_transform(&data) {
+    match imputer_cons.fit_transform_helper(&data) {
         Ok(imputed_data) => {
             println!("Mean imputed data:\n{}", imputed_data);
         }

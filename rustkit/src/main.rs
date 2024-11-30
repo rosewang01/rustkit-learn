@@ -77,13 +77,13 @@ fn sample_pca() {
     );
 
     let mut pca = PCA::new();
-    let transformed_data = pca.fit_transform(&data, 2);
+    let transformed_data = pca.fit_transform_helper(&data, 2);
     println!("Original Data:\n{}", data);
     println!("Transformed Data:\n{}", transformed_data);
-    println!("Principal Components:\n{}", pca.components());
-    println!("Explained Variance:\n{}", pca.explained_variance());
+    println!("Principal Components:\n{}", pca.components_helper());
+    println!("Explained Variance:\n{}", pca.explained_variance_helper());
 
-    let original_data = pca.inverse_transform(&transformed_data);
+    let original_data = pca.inverse_transform_helper(&transformed_data);
     println!(
         "Reconstructed Data (after inverse transform):\n{}",
         original_data

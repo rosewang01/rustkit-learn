@@ -9,7 +9,7 @@ use preprocessing::simple_imputer::Imputer;
 use preprocessing::standard_scaler::StandardScaler;
 use supervised::ridge_regression::RidgeRegression;
 use testing::regression_metrics::{R2Score, MSE};
-use unsupervised::kmeans::{InitMethod, KMeans};
+use unsupervised::kmeans::KMeans;
 use unsupervised::pca::PCA;
 
 fn main() {

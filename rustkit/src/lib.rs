@@ -11,6 +11,9 @@ mod testing;
 use testing::regression_metrics::R2Score;
 use testing::regression_metrics::MSE;
 
+mod unsupervised;
+use unsupervised::kmeans::KMeans;
+
 pub mod converters;
 use converters::{converter_matrix_test, converter_vector_test};
 
@@ -21,6 +24,7 @@ fn rustkit(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<RidgeRegression>()?;
     m.add_class::<R2Score>()?;
     m.add_class::<MSE>()?;
+    m.add_class::<KMeans>()?;
 
     m.add_function(wrap_pyfunction!(converter_vector_test, m)?)?;
     m.add_function(wrap_pyfunction!(converter_matrix_test, m)?)?;

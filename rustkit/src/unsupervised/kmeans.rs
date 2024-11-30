@@ -1,4 +1,13 @@
+use crate::converters::{
+    python_to_rust_dynamic_matrix, python_to_rust_dynamic_vector, rust_to_python_dynamic_matrix,
+    rust_to_python_dynamic_vector,
+};
 use nalgebra::{DMatrix, DVector};
+use numpy::{PyArray1, PyArray2, PyReadonlyArray1, PyReadonlyArray2};
+use pyo3::exceptions::PyValueError;
+use pyo3::prelude::*;
+use pyo3::types::PyFloat;
+use pyo3::Python;
 use rand::seq::SliceRandom;
 use rand::Rng;
 use std::f64;
@@ -9,11 +18,12 @@ pub enum InitMethod {
     Random,
 }
 
+#[pyclass]
 pub struct KMeans {
-    k: usize,                       // Number of clusters
-    max_iter: usize,                // Maximum number of iterations for a single run
-    n_init: usize,                  // Number of runs of the algo (we pick the best, particularly relevant for random initialization)
-    init_method: InitMethod,        // Initialization method (KMeans++ or Random)
+    k: usize,                        // Number of clusters
+    max_iter: usize,                 // Maximum number of iterations for a single run
+    n_init: usize, // Number of runs of the algo (we pick the best, particularly relevant for random initialization)
+    init_method: InitMethod, // Initialization method (KMeans++ or Random)
     centroids: Option<DMatrix<f64>>, // Centroids of the clusters after fitting
     labels: Option<DVector<usize>>, // Cluster labels for each data point
 }
@@ -21,9 +31,21 @@ pub struct KMeans {
 // Implementation of Lloyd's KMeans clustering algorithm with KMeans++ or random initialization
 // IMPORTANT: Centroids are stored as a (d x k) matrix where d is the dimension of your data.
 //  in particular, this means that the centroids are stored as the *columns* of the centroids matrix
+#[pymethods]
 impl KMeans {
     // Creates a new KMeans instance with specified parameters
-    pub fn new(k: usize, init_method: InitMethod, max_iter: Option<usize>, n_init: Option<usize>) -> Self {
+    #[new]
+    pub fn new(
+        k: usize,
+        init_method_str: &str,
+        max_iter: Option<usize>,
+        n_init: Option<usize>,
+    ) -> Self {
+        let init_method = match init_method_str {
+            "kmeans++" => InitMethod::KMeansPlusPlus,
+            "random" => InitMethod::Random,
+            _ => panic!("Invalid initialization method"),
+        };
         let max_iter = max_iter.unwrap_or(200);
         let n_init = n_init.unwrap_or_else(|| match init_method {
             InitMethod::KMeansPlusPlus => 1,
@@ -40,8 +62,61 @@ impl KMeans {
         }
     }
 
+    pub fn fit(&mut self, data: PyReadonlyArray2<f64>) -> PyResult<()> {
+        let data = python_to_rust_dynamic_matrix(&data);
+        self.fit_helper(&data);
+        Ok(())
+    }
+
+    pub fn fit_predict(
+        &mut self,
+        py: Python,
+        data: PyReadonlyArray2<f64>,
+    ) -> PyResult<Py<PyArray1<usize>>> {
+        let data = python_to_rust_dynamic_matrix(&data);
+        let labels = self.fit_predict_helper(&data);
+        rust_to_python_dynamic_vector(py, labels)
+    }
+
+    pub fn compute_inertia(
+        &self,
+        py: Python,
+        data: PyReadonlyArray2<f64>,
+        labels: PyReadonlyArray1<i64>,
+    ) -> PyResult<Py<PyFloat>> {
+        let data = python_to_rust_dynamic_matrix(&data);
+        let labels = python_to_rust_dynamic_vector(&labels);
+        let labels_usize = DVector::from_iterator(labels.len(), labels.iter().map(|&x| x as usize));
+        let float =
+            self.compute_inertia_helper(&data, &labels_usize, self.centroids.as_ref().unwrap());
+        Ok(PyFloat::new(py, float).into())
+    }
+
+    pub fn predict(
+        &self,
+        py: Python,
+        data: PyReadonlyArray2<f64>,
+    ) -> PyResult<Py<PyArray1<usize>>> {
+        let data = python_to_rust_dynamic_matrix(&data);
+        let labels = self.predict_helper(&data);
+        match labels {
+            Some(labels) => rust_to_python_dynamic_vector(py, labels),
+            None => Err(PyValueError::new_err("Model has not been fitted")),
+        }
+    }
+
+    pub fn get_centroids(&self, py: Python) -> PyResult<Py<PyArray2<f64>>> {
+        let centroids_opt = self.get_centroids_helper();
+        match centroids_opt {
+            Some(centroids) => rust_to_python_dynamic_matrix(py, centroids.clone()),
+            None => Err(PyValueError::new_err("Centroids have not been computed")),
+        }
+    }
+}
+
+impl KMeans {
     // Fits the KMeans model to the data
-    pub fn fit(&mut self, data: &DMatrix<f64>) {
+    pub fn fit_helper(&mut self, data: &DMatrix<f64>) {
         let mut best_inertia = f64::MAX;
         let mut best_centroids = None;
         let mut best_labels = None;
@@ -61,9 +136,9 @@ impl KMeans {
     }
 
     // Combines fit and predict into a single function
-    pub fn fit_predict(&mut self, data: &DMatrix<f64>) -> DVector<usize> {
-        self.fit(data);
-        self.predict(data).unwrap()
+    pub fn fit_predict_helper(&mut self, data: &DMatrix<f64>) -> DVector<usize> {
+        self.fit_helper(data);
+        self.predict_helper(data).unwrap()
     }
 
     // Runs a single iteration of KMeans, initializing centroids and iteratively updating them
@@ -81,7 +156,7 @@ impl KMeans {
             labels = self.assign_labels(data, &centroids);
             let new_centroids = self.update_centroids(data, &labels);
 
-            let new_inertia = self.compute_inertia(data, &labels, &new_centroids);
+            let new_inertia = self.compute_inertia_helper(data, &labels, &new_centroids);
             if (inertia - new_inertia).abs() < 1e-4 {
                 break; // Stop if the improvement in inertia is negligible
             }
@@ -109,7 +184,8 @@ impl KMeans {
         centroids.push(data.row(rng.gen_range(0..data.nrows())).transpose());
 
         for _ in 1..self.k {
-            let distances: Vec<f64> = data.row_iter()
+            let distances: Vec<f64> = data
+                .row_iter()
                 .map(|row| {
                     centroids
                         .iter()
@@ -176,8 +252,12 @@ impl KMeans {
     }
 
     // Computes the inertia (sum of squared distances to nearest centroids)
-    pub fn compute_inertia(&self, data: &DMatrix<f64>, labels: &DVector<usize>, centroids: &DMatrix<f64>) -> f64 {
-        
+    pub fn compute_inertia_helper(
+        &self,
+        data: &DMatrix<f64>,
+        labels: &DVector<usize>,
+        centroids: &DMatrix<f64>,
+    ) -> f64 {
         data.row_iter()
             .enumerate()
             .map(|(i, row)| (row - centroids.column(labels[i]).transpose()).norm_squared())
@@ -185,14 +265,14 @@ impl KMeans {
     }
 
     // Predicts cluster labels for new data points
-    pub fn predict(&self, data: &DMatrix<f64>) -> Option<DVector<usize>> {
+    pub fn predict_helper(&self, data: &DMatrix<f64>) -> Option<DVector<usize>> {
         self.centroids
             .as_ref()
             .map(|centroids| self.assign_labels(data, centroids))
     }
 
     //
-    pub fn get_centroids(&self) -> Option<&DMatrix<f64>> {
+    pub fn get_centroids_helper(&self) -> Option<&DMatrix<f64>> {
         self.centroids.as_ref()
     }
 }

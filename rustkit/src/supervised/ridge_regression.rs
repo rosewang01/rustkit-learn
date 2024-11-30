@@ -1,5 +1,13 @@
+use crate::converters::{
+    python_to_rust_dynamic_matrix, python_to_rust_dynamic_vector, rust_to_python_dynamic_vector,
+    rust_to_python_opt_float,
+};
 use nalgebra::{DMatrix, DVector};
+use numpy::{PyArray1, PyReadonlyArray1, PyReadonlyArray2};
+use pyo3::prelude::*;
+use pyo3::types::PyFloat;
 
+#[pyclass]
 pub struct RidgeRegression {
     weights: DVector<f64>,
     intercept: Option<f64>, // Optional because it may not be used
@@ -7,6 +15,7 @@ pub struct RidgeRegression {
     with_bias: bool,
 }
 
+#[pymethods]
 impl RidgeRegression {
     /// Creates a new RidgeRegression instance.
     /// Set `regularization` to 0.0 for standard linear regression.
@@ -14,6 +23,7 @@ impl RidgeRegression {
     /// We use LU decomposition and solve, rather than explicitly computing a (computationally expensive) matrix inverse
     /// IMPORTANT: Ridge regression should only be used on normalized data. If the data is not normalized, set regularization = 0.
 
+    #[new]
     pub fn new(regularization: f64, with_bias: bool) -> Self {
         RidgeRegression {
             weights: DVector::zeros(0),
@@ -23,8 +33,68 @@ impl RidgeRegression {
         }
     }
 
+    #[getter]
+    pub fn weights(&self, py: Python) -> PyResult<Py<PyArray1<f64>>> {
+        rust_to_python_dynamic_vector(py, self.weights.clone())
+    }
+
+    #[getter]
+    pub fn intercept(&self, py: Python) -> PyResult<Py<PyFloat>> {
+        rust_to_python_opt_float(py, self.intercept)
+    }
+
+    #[setter]
+    pub fn set_regularization(&mut self, regularization: f64) -> PyResult<()> {
+        self.regularization = regularization;
+        Ok(())
+    }
+
+    #[setter]
+    pub fn set_with_bias(&mut self, with_bias: bool) -> PyResult<()> {
+        self.with_bias = with_bias;
+        if with_bias {
+            self.intercept = Some(0.0);
+        } else {
+            self.intercept = None;
+        }
+        Ok(())
+    }
+
+    #[setter]
+    pub fn set_weights(&mut self, weights: PyReadonlyArray1<f64>) -> PyResult<()> {
+        self.weights = python_to_rust_dynamic_vector(&weights);
+        Ok(())
+    }
+
+    #[setter]
+    pub fn set_intercept(&mut self, intercept: Option<f64>) -> PyResult<()> {
+        self.intercept = intercept;
+        Ok(())
+    }
+
     /// Fits the Ridge Regression model to the data.
-    pub fn fit(&mut self, x: &DMatrix<f64>, y: &DVector<f64>) {
+    pub fn fit(
+        &mut self,
+        data: PyReadonlyArray2<f64>,
+        target: PyReadonlyArray1<f64>,
+    ) -> PyResult<()> {
+        let x = python_to_rust_dynamic_matrix(&data);
+        let y = python_to_rust_dynamic_vector(&target);
+        self.fit_helper(&x, &y);
+        Ok(())
+    }
+
+    /// Predicts target values for the given input data.
+    pub fn predict(&self, py: Python, data: PyReadonlyArray2<f64>) -> PyResult<Py<PyArray1<f64>>> {
+        let x = python_to_rust_dynamic_matrix(&data);
+        let predictions = self.predict_helper(&x);
+        rust_to_python_dynamic_vector(py, predictions)
+    }
+}
+
+impl RidgeRegression {
+    /// Fits the Ridge Regression model to the data.
+    pub fn fit_helper(&mut self, x: &DMatrix<f64>, y: &DVector<f64>) {
         let n_samples = x.nrows();
         let n_features = x.ncols();
 
@@ -74,7 +144,7 @@ impl RidgeRegression {
     }
 
     /// Predicts target values for the given input data.
-    pub fn predict(&self, x: &DMatrix<f64>) -> DVector<f64> {
+    pub fn predict_helper(&self, x: &DMatrix<f64>) -> DVector<f64> {
         let predictions = if self.with_bias {
             let intercept = self
                 .intercept
@@ -87,12 +157,12 @@ impl RidgeRegression {
     }
 
     /// Returns the model weights (coefficients).
-    pub fn weights(&self) -> &DVector<f64> {
+    pub fn weights_helper(&self) -> &DVector<f64> {
         &self.weights
     }
 
     /// Returns the model intercept (if available).
-    pub fn intercept(&self) -> Option<f64> {
+    pub fn intercept_helper(&self) -> Option<f64> {
         self.intercept
     }
 }

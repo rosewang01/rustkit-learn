@@ -1,7 +1,27 @@
+use crate::converters::python_to_rust_dynamic_vector;
 use nalgebra::DVector;
+use numpy::PyReadonlyArray1;
+use pyo3::prelude::*;
+use pyo3::types::PyFloat;
 
 /// A class to compute the R² score between two vectors.
+#[pyclass]
 pub struct R2Score;
+
+#[pymethods]
+impl R2Score {
+    #[staticmethod]
+    pub fn compute(
+        py: Python,
+        y_true: PyReadonlyArray1<f64>,
+        y_pred: PyReadonlyArray1<f64>,
+    ) -> PyResult<Py<PyFloat>> {
+        let rust_y_true = python_to_rust_dynamic_vector(&y_true);
+        let rust_y_pred = python_to_rust_dynamic_vector(&y_pred);
+        let result = R2Score::compute_helper(&rust_y_true, &rust_y_pred);
+        Ok(PyFloat::new(py, result).into())
+    }
+}
 
 impl R2Score {
     /// Computes the R² score between the true values and predictions.
@@ -15,7 +35,7 @@ impl R2Score {
     ///
     /// # Panics
     /// - If `y_true` and `y_pred` have different lengths.
-    pub fn compute(y_true: &DVector<f64>, y_pred: &DVector<f64>) -> f64 {
+    pub fn compute_helper(y_true: &DVector<f64>, y_pred: &DVector<f64>) -> f64 {
         assert_eq!(
             y_true.len(),
             y_pred.len(),
@@ -43,7 +63,23 @@ impl R2Score {
     }
 }
 
+#[pyclass]
 pub struct MSE;
+
+#[pymethods]
+impl MSE {
+    #[staticmethod]
+    pub fn compute(
+        py: Python,
+        y_true: PyReadonlyArray1<f64>,
+        y_pred: PyReadonlyArray1<f64>,
+    ) -> PyResult<Py<PyFloat>> {
+        let rust_y_true = python_to_rust_dynamic_vector(&y_true);
+        let rust_y_pred = python_to_rust_dynamic_vector(&y_pred);
+        let result = MSE::compute_helper(&rust_y_true, &rust_y_pred);
+        Ok(PyFloat::new(py, result).into())
+    }
+}
 
 impl MSE {
     /// Computes the MSE between the true values and predictions.
@@ -57,7 +93,7 @@ impl MSE {
     ///
     /// # Panics
     /// - If `y_true` and `y_pred` have different lengths.
-    pub fn compute(y_true: &DVector<f64>, y_pred: &DVector<f64>) -> f64 {
+    pub fn compute_helper(y_true: &DVector<f64>, y_pred: &DVector<f64>) -> f64 {
         assert_eq!(
             y_true.len(),
             y_pred.len(),

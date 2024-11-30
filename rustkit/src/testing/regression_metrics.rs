@@ -10,8 +10,8 @@ pub struct R2Score;
 
 #[pymethods]
 impl R2Score {
+    #[staticmethod]
     pub fn compute(
-        &self,
         py: Python,
         y_true: PyReadonlyArray1<f64>,
         y_pred: PyReadonlyArray1<f64>,
@@ -68,8 +68,8 @@ pub struct MSE;
 
 #[pymethods]
 impl MSE {
+    #[staticmethod]
     pub fn compute(
-        &self,
         py: Python,
         y_true: PyReadonlyArray1<f64>,
         y_pred: PyReadonlyArray1<f64>,

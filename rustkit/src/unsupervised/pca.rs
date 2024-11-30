@@ -1,8 +1,9 @@
 use crate::converters::{
-    python_to_rust_dynamic_matrix, rust_to_python_dynamic_matrix, rust_to_python_dynamic_vector,
+    python_to_rust_dynamic_matrix, python_to_rust_dynamic_vector, rust_to_python_dynamic_matrix,
+    rust_to_python_dynamic_vector,
 };
 use nalgebra::{linalg::SVD, DMatrix, DVector, RowDVector};
-use numpy::{PyArray1, PyArray2, PyReadonlyArray2};
+use numpy::{PyArray1, PyArray2, PyReadonlyArray1, PyReadonlyArray2};
 use pyo3::prelude::*;
 
 #[pyclass]
@@ -62,12 +63,41 @@ impl PCA {
         rust_to_python_dynamic_matrix(py, original_data)
     }
 
+    #[getter]
     pub fn components(&self, py: Python) -> PyResult<Py<PyArray2<f64>>> {
         rust_to_python_dynamic_matrix(py, self.components.clone())
     }
 
+    #[getter]
     pub fn explained_variance(&self, py: Python) -> PyResult<Py<PyArray1<f64>>> {
         rust_to_python_dynamic_vector(py, self.explained_variance.clone())
+    }
+
+    #[getter]
+    pub fn mean(&self, py: Python) -> PyResult<Py<PyArray1<f64>>> {
+        let mean = self.mean.transpose();
+        rust_to_python_dynamic_vector(py, mean)
+    }
+
+    #[setter]
+    pub fn set_components(&mut self, components: PyReadonlyArray2<f64>) -> PyResult<()> {
+        self.components = python_to_rust_dynamic_matrix(&components);
+        Ok(())
+    }
+
+    #[setter]
+    pub fn set_explained_variance(
+        &mut self,
+        explained_variance: PyReadonlyArray1<f64>,
+    ) -> PyResult<()> {
+        self.explained_variance = python_to_rust_dynamic_vector(&explained_variance);
+        Ok(())
+    }
+
+    #[setter]
+    pub fn set_mean(&mut self, mean: PyReadonlyArray1<f64>) -> PyResult<()> {
+        self.mean = python_to_rust_dynamic_vector(&mean).transpose();
+        Ok(())
     }
 }
 

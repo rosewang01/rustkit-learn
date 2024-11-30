@@ -84,7 +84,7 @@ pub fn rust_to_python_dynamic_matrix<
     let rows = shape.0;
     let cols = shape.1;
     let transposed_matrix = matrix.transpose();
-    let array = Array2::from_shape_vec((cols, rows), transposed_matrix.data.into());
+    let array = Array2::from_shape_vec((rows, cols), transposed_matrix.data.into());
     match array {
         Ok(arr) => Ok(PyArray2::from_array(py, &arr).into()),
         Err(e) => Err(pyo3::exceptions::PyValueError::new_err(format!(
@@ -134,7 +134,7 @@ pub fn rust_to_python_opt_dynamic_matrix(
         })
         .collect();
 
-    let array = Array2::from_shape_vec((cols, rows), array_data).map_err(|e| {
+    let array = Array2::from_shape_vec((rows, cols), array_data).map_err(|e| {
         pyo3::exceptions::PyValueError::new_err(format!("Array creation failed: {}", e))
     })?;
     let numpy_array = PyArray2::from_array(py, &array);
@@ -157,5 +157,6 @@ pub fn converter_matrix_test(
     matrix: PyReadonlyArray2<f64>,
 ) -> PyResult<Py<PyArray2<f64>>> {
     let rust_matrix = python_to_rust_dynamic_matrix(&matrix);
+    println!("{:?}", rust_matrix);
     rust_to_python_dynamic_matrix(py, rust_matrix)
 }

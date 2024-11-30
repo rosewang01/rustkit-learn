@@ -82,13 +82,11 @@ impl KMeans {
         &self,
         py: Python,
         data: PyReadonlyArray2<f64>,
-        labels: PyReadonlyArray1<i64>,
+        labels: PyReadonlyArray1<usize>,
     ) -> PyResult<Py<PyFloat>> {
         let data = python_to_rust_dynamic_matrix(&data);
         let labels = python_to_rust_dynamic_vector(&labels);
-        let labels_usize = DVector::from_iterator(labels.len(), labels.iter().map(|&x| x as usize));
-        let float =
-            self.compute_inertia_helper(&data, &labels_usize, self.centroids.as_ref().unwrap());
+        let float = self.compute_inertia_helper(&data, &labels, self.centroids.as_ref().unwrap());
         Ok(PyFloat::new(py, float).into())
     }
 
@@ -105,7 +103,8 @@ impl KMeans {
         }
     }
 
-    pub fn get_centroids(&self, py: Python) -> PyResult<Py<PyArray2<f64>>> {
+    #[getter]
+    pub fn centroids(&self, py: Python) -> PyResult<Py<PyArray2<f64>>> {
         let centroids_opt = self.get_centroids_helper();
         match centroids_opt {
             Some(centroids) => rust_to_python_dynamic_matrix(py, centroids.clone()),

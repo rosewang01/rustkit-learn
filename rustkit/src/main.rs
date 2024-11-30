@@ -5,7 +5,7 @@ mod supervised;
 mod testing;
 mod unsupervised;
 
-use preprocessing::simple_imputer::{ImputationType, Imputer};
+use preprocessing::simple_imputer::Imputer;
 use preprocessing::standard_scaler::StandardScaler;
 use supervised::ridge_regression::RidgeRegression;
 use testing::regression_metrics::{R2Score, MSE};
@@ -36,19 +36,31 @@ fn sample_ridge() {
 
     // Ridge regression with bias (default behavior)
     let mut ridge_with_bias = RidgeRegression::new(1.0, true);
-    ridge_with_bias.fit(&x, &y);
+    ridge_with_bias.fit_helper(&x, &y);
 
-    println!("With Bias - Weights: {}", ridge_with_bias.weights());
-    println!("With Bias - Intercept: {:?}", ridge_with_bias.intercept());
-    println!("With Bias - Predictions: {}", ridge_with_bias.predict(&x));
+    println!("With Bias - Weights: {}", ridge_with_bias.weights_helper());
+    println!(
+        "With Bias - Intercept: {:?}",
+        ridge_with_bias.intercept_helper()
+    );
+    println!(
+        "With Bias - Predictions: {}",
+        ridge_with_bias.predict_helper(&x)
+    );
 
     // Ridge regression without bias
     let mut ridge_no_bias = RidgeRegression::new(1.0, false);
-    ridge_no_bias.fit(&x, &y);
+    ridge_no_bias.fit_helper(&x, &y);
 
-    println!("No Bias - Weights: {}", ridge_no_bias.weights());
-    println!("No Bias - Intercept: {:?}", ridge_no_bias.intercept());
-    println!("No Bias - Predictions: {}", ridge_no_bias.predict(&x));
+    println!("No Bias - Weights: {}", ridge_no_bias.weights_helper());
+    println!(
+        "No Bias - Intercept: {:?}",
+        ridge_no_bias.intercept_helper()
+    );
+    println!(
+        "No Bias - Predictions: {}",
+        ridge_no_bias.predict_helper(&x)
+    );
 }
 
 fn sample_pca() {
@@ -115,8 +127,8 @@ fn sample_r2() {
     let y_pred = DVector::from_row_slice(&[2.5, 0.0, 2.0, 8.0]);
 
     // Compute the scores
-    let r2_score = R2Score::compute(&y_true, &y_pred);
-    let mse = MSE::compute(&y_true, &y_pred);
+    let r2_score = R2Score::compute_helper(&y_true, &y_pred);
+    let mse = MSE::compute_helper(&y_true, &y_pred);
 
     println!("R² Score: {}", r2_score);
     println!("MSE: {}", mse);
@@ -125,15 +137,15 @@ fn sample_r2() {
     let y_true_constant = DVector::from_row_slice(&[1.0, 1.0, 1.0, 1.0]);
     let y_pred_constant = DVector::from_row_slice(&[1.0, 1.0, 1.0, 1.0]);
 
-    let r2_score_constant = R2Score::compute(&y_true_constant, &y_pred_constant);
-    let mse_constant = MSE::compute(&y_true_constant, &y_pred_constant);
+    let r2_score_constant = R2Score::compute_helper(&y_true_constant, &y_pred_constant);
+    let mse_constant = MSE::compute_helper(&y_true_constant, &y_pred_constant);
     println!("R² Score (constant): {}", r2_score_constant);
     println!("MSE (constant): {}", mse_constant);
 
     // Example where R² is negative (bad model)
     let y_pred_bad = DVector::from_row_slice(&[10.0, 10.0, 10.0, 10.0]);
-    let r2_score_bad = R2Score::compute(&y_true, &y_pred_bad);
-    let mse_bad = MSE::compute(&y_true, &y_pred_bad);
+    let r2_score_bad = R2Score::compute_helper(&y_true, &y_pred_bad);
+    let mse_bad = MSE::compute_helper(&y_true, &y_pred_bad);
     println!("R² Score (bad model): {}", r2_score_bad);
     println!("MSE (bad model): {}", mse_bad);
 }
@@ -158,8 +170,8 @@ fn sample_imputer() {
         ],
     );
 
-    let imputer_mean = Imputer::new(ImputationType::Mean);
-    let imputer_cons = Imputer::new(ImputationType::Constant(-1.0));
+    let imputer_mean = Imputer::new("mean", None);
+    let imputer_cons = Imputer::new("constant", Some(-1.0));
     match imputer_mean.fit_transform_helper(&data) {
         Ok(imputed_data) => {
             println!("Original data:\n{:?}", data);
@@ -201,33 +213,39 @@ fn sample_kmeans() {
     println!("{}", data.row(1));
 
     // Run KMeans with Random initialization
-    let mut kmeans_random = KMeans::new(k, InitMethod::Random, Some(200), Some(10));
-    kmeans_random.fit(&data);
-    let labels_random = kmeans_random.predict(&data).unwrap();
-    let inertia_random = kmeans_random.compute_inertia(
+    let mut kmeans_random = KMeans::new(k, "random", Some(200), Some(10));
+    kmeans_random.fit_helper(&data);
+    let labels_random = kmeans_random.predict_helper(&data).unwrap();
+    let inertia_random = kmeans_random.compute_inertia_helper(
         &data,
         &labels_random,
-        kmeans_random.get_centroids().unwrap(),
+        kmeans_random.get_centroids_helper().unwrap(),
     );
 
     // Print results for Random initialization
     println!("Results with Random Initialization:");
     println!("Labels: {}", labels_random.transpose());
-    println!("Centroids: {}", kmeans_random.get_centroids().unwrap());
+    println!(
+        "Centroids: {}",
+        kmeans_random.get_centroids_helper().unwrap()
+    );
     println!("Total Inertia: {:.4}", inertia_random);
 
     // Run KMeans with KMeans++ initialization
-    let mut kmeans_plus_plus = KMeans::new(k, InitMethod::KMeansPlusPlus, None, None);
-    let labels_plus_plus = kmeans_plus_plus.fit_predict(&data);
-    let inertia_plus_plus = kmeans_plus_plus.compute_inertia(
+    let mut kmeans_plus_plus = KMeans::new(k, "kmeans++", None, None);
+    let labels_plus_plus = kmeans_plus_plus.fit_predict_helper(&data);
+    let inertia_plus_plus = kmeans_plus_plus.compute_inertia_helper(
         &data,
         &labels_plus_plus,
-        kmeans_plus_plus.get_centroids().unwrap(),
+        kmeans_plus_plus.get_centroids_helper().unwrap(),
     );
 
     // Print results for KMeans++ initialization
     println!("\nResults with KMeans++ Initialization:");
     println!("Labels: {}", labels_plus_plus.transpose());
-    println!("Centroids: {}", kmeans_plus_plus.get_centroids().unwrap());
+    println!(
+        "Centroids: {}",
+        kmeans_plus_plus.get_centroids_helper().unwrap()
+    );
     println!("Total Inertia: {:.4}", inertia_plus_plus);
 }

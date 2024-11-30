@@ -115,8 +115,8 @@ impl StandardScaler {
 
     /// Fits the scaler and then transforms the input data.
     pub fn fit_transform_helper(&mut self, data: &DMatrix<f64>) -> DMatrix<f64> {
-        self.fit(data);
-        self.transform(data)
+        self.fit_helper(data);
+        self.transform_helper(data)
     }
 
     pub fn inverse_transform_helper(&self, scaled_data: &DMatrix<f64>) -> DMatrix<f64> {

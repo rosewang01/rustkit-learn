@@ -12,3 +12,7 @@ numpy = "0.18"
 [lib]
 name = "rustkit"
 crate-type = ["cdylib"]
+
+[[bin]]
+name = "rustkit-cli"  # Renames the binary target
+path = "src/main.rs"

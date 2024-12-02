@@ -64,13 +64,16 @@ impl Imputer {
                             non_missing_values.push(value);
                         }
                     }
-
-                    if non_missing_values.is_empty() {
-                        return Err(ImputerError { column_index: j }); // Error if column is all None
+                    
+                    let mean = self.mean_safe(&non_missing_values);
+                    match mean {
+                        None => {
+                            return Err(ImputerError { column_index: j })
+                        }
+                        Some(value) => {
+                            value
+                        }
                     }
-
-                    let sum: f64 = non_missing_values.iter().sum();
-                    sum / non_missing_values.len() as f64
                 }
                 ImputationType::Constant(val) => *val,
             };
@@ -105,4 +108,19 @@ impl Imputer {
 
         result
     }
+
+    // Helper function to calculate the mean of a Vec without running into overflow errors
+    fn mean_safe(&self, vec: &Vec<f64>) -> Option<f64> {
+        if vec.is_empty() {
+            None // Handle empty vector
+        } else {
+            let mut mean = 0.0;
+            for (i, &value) in vec.iter().enumerate() {
+                mean += (value - mean) / (i + 1) as f64; // Update mean iteratively
+            }
+            Some(mean)
+        }
+    }
+    
+    
 }

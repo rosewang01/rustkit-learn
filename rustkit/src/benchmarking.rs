@@ -16,10 +16,6 @@ where
     let duration = start.elapsed();
 
     let runtime = duration.as_secs_f64();
-    let machine_time = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs_f64();
 
     let mut file = OpenOptions::new()
         .create(true)
@@ -28,8 +24,8 @@ where
 
     writeln!(
         file,
-        "{},{},{},{:?},{:?}",
-        func_name, input_rows, input_cols, runtime, machine_time
+        "{},{},{},{:?}",
+        func_name, input_rows, input_cols, runtime
     )?;
 
     Ok(resp)

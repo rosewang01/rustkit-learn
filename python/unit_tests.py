@@ -61,16 +61,20 @@ def get_kmeans_equality(sklearn_result, rustkit_result, n_clusters):
 
 def test_kmeans_correctness(X):
     # FLAG: seems like there's an error where if the number of cols in the input matrix is neq to the number of clusters, the test will fail
-    n_clusters = X.shape[1]
+    n_clusters = min(3, X.shape[0])
     sklearn_kmeans_random = SklearnKMeans(n_clusters=n_clusters, init="random")
     sklearn_kmeans = SklearnKMeans(n_clusters)
     rustkit_kmeans_random = rustkit.KMeans(n_clusters, "random", 200, 10)
     rustkit_kmeans = rustkit.KMeans(n_clusters, "kmeans++", 200, 10)
     
     sklearn_result_random = sklearn_kmeans_random.fit_predict(X)
+    sklearn_random_inertia = sklearn_kmeans_random.inertia_
     sklearn_result = sklearn_kmeans.fit_predict(X)
+    sklearn_inertia = sklearn_kmeans.inertia_
     rustkit_result_random = rustkit_kmeans_random.fit_predict(X)
+    rustkit_random_inertia = rustkit_kmeans_random.compute_inertia(X, rustkit_result_random)
     rustkit_result = rustkit_kmeans.fit_predict(X)
+    rustkit_inertia = rustkit_kmeans.compute_inertia(X, rustkit_result)
     
     if (get_kmeans_equality(sklearn_result, rustkit_result, n_clusters)):
         print("KMeans - KMeans++ correctness test passed!")
@@ -80,6 +84,13 @@ def test_kmeans_correctness(X):
         print(sklearn_result)
         print("Rustkit KMeans result:")
         print(rustkit_result)
+
+    if (abs(sklearn_inertia - rustkit_inertia) < 1e-5):
+        print("KMeans - KMeans++ inertia correctness test passed!")
+    else:
+        print("KMeans - KMeans++ inertia correctness test failed!")
+        print("Sklearn KMeans inertia:", sklearn_inertia)
+        print("Rustkit KMeans inertia:", rustkit_inertia)
     
     if (get_kmeans_equality(sklearn_result_random, rustkit_result_random, n_clusters)):
         print("KMeans - Random correctness test passed!")
@@ -89,32 +100,15 @@ def test_kmeans_correctness(X):
         print(sklearn_result)
         print("Rustkit KMeans result:")
         print(rustkit_result_random)
+
+    if (abs(sklearn_random_inertia - rustkit_random_inertia) < 1e-5):
+        print("KMeans - Random inertia correctness test passed!")
+    else:
+        print("KMeans - Random inertia correctness test failed!")
+        print("Sklearn KMeans inertia:", sklearn_random_inertia)
+        print("Rustkit KMeans inertia:", rustkit_random_inertia)
     # assert np.allclose(sklearn_result, rustkit_result), "KMeans results differ!"
     # print("KMeans correctness test passed!")
-
-def test_kmeans_inertia(X):
-    # FLAG: change this back when the bug is fixed
-    n_clusters = X.shape[1]
-    kmeans = rustkit.KMeans(n_clusters, "random", 200, 10)
-    kmeans.fit(X)
-    
-    labels = kmeans.predict(X)
-    inertia = kmeans.compute_inertia(X, labels)
-    
-    # Compute inertia manually
-    computed_inertia = sum(
-        np.linalg.norm(X[i] - kmeans.centroids[labels[i]])**2 for i in range(len(X))
-    )
-
-    if (abs(inertia - computed_inertia) < 1e-5):
-        print("KMeans inertia test passed!")
-    else:
-        print("KMeans inertia test failed!")
-        print("Inertia:", inertia)
-        print("Computed Inertia:", computed_inertia)
-    
-    # assert abs(inertia - computed_inertia) < 1e-5, "Inertia computation mismatch!"
-    # print("KMeans inertia test passed!")
 
 def test_standard_scaler_correctness(X):
     sklearn_scaler = SklearnStandardScaler()
@@ -204,13 +198,12 @@ def test_square_input():
     # Test square input
     X = np.random.rand(10, 10)
     y = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
-    X_clustered, _ = make_blobs(n_samples=10, centers=3, n_features=3, random_state=0)
+    X_clustered, _ = make_blobs(n_samples=10, centers=3, n_features=10, random_state=0)
     
     test_standard_scaler_correctness(X)
     test_ridge_correctness(X, y)
     test_pca_correctness(X)
     test_kmeans_correctness(X_clustered)
-    test_kmeans_inertia(X_clustered)
 
 def test_single_input():
     print("SINGLE INPUT")
@@ -226,7 +219,6 @@ def test_single_input():
     test_mse_correctness(y_pred, y)
     test_pca_correctness(X)
     test_kmeans_correctness(X)
-    test_kmeans_inertia(X)
 
 def test_large_input():
     print("LARGE INPUT")
@@ -235,7 +227,7 @@ def test_large_input():
     y = np.random.rand(1000)
     y_true = np.random.rand(1000)
     y_pred = np.random.rand(1000)
-    X_clustered, _ = make_blobs(n_samples=1000, centers=10, n_features=10, random_state=0)
+    X_clustered, _ = make_blobs(n_samples=1000, centers=3, n_features=100, random_state=0)
     
     test_standard_scaler_correctness(X)
     test_ridge_correctness(X, y)
@@ -243,13 +235,12 @@ def test_large_input():
     test_mse_correctness(y_pred, y_true)
     test_pca_correctness(X)
     test_kmeans_correctness(X_clustered)
-    test_kmeans_inertia(X_clustered)
 
 def test_negative_input():
     print("NEGATIVE INPUT")
     # Test negative input
     X = np.random.rand(10, 10) - 0.5
-    X_clustered = make_blobs(n_samples=10, centers=3, n_features=3, random_state=0)[0] - 0.5
+    X_clustered = make_blobs(n_samples=10, centers=3, n_features=10, random_state=0)[0] - 0.5
     y = np.array([1.0, -2.0, 3.0, -4.0, 5.0, -6.0, 7.0, -8.0, 9.0, -10.0])
     y_true = np.array([1.0, -2.0, 3.0, -4.0, 5.0, -6.0, 7.0, -8.0, 9.0, -10.0])
     y_pred = np.array([2.0, -3.0, 4.0, -5.0, 6.0, -7.0, 8.0, -9.0, 10.0, -11.0])
@@ -260,14 +251,13 @@ def test_negative_input():
     test_mse_correctness(y_pred, y_true)
     test_pca_correctness(X)
     test_kmeans_correctness(X_clustered)
-    test_kmeans_inertia(X_clustered)
 
 def test_mixed_input():
     print("MIXED INPUT")
     # Test mixed input
     X = np.random.rand(10, 10)
-    X_clustered_1 = make_blobs(n_samples=10, centers=2, n_features=4, random_state=0)[0] - 0.5
-    X_clustered_2 = make_blobs(n_samples=10, centers=2, n_features=4, random_state=0)[0]
+    X_clustered_1 = make_blobs(n_samples=10, centers=3, n_features=10, random_state=0)[0] - 0.5
+    X_clustered_2 = make_blobs(n_samples=10, centers=3, n_features=10, random_state=0)[0]
     X_clustered = np.concatenate((X_clustered_1, X_clustered_2), axis=0)
     y = np.array([1.0, -2.0, 3.0, -4.0, 5.0, -6.0, 7.0, -8.0, 9.0, -10.0])
     y_true = np.array([1.0, -2.0, 3.0, -4.0, 5.0, -6.0, 7.0, -8.0, 9.0, -10.0])
@@ -279,7 +269,6 @@ def test_mixed_input():
     test_mse_correctness(y_pred, y_true)
     test_pca_correctness(X)
     test_kmeans_correctness(X_clustered)
-    test_kmeans_inertia(X_clustered)
 
 def main():
     # test_empty_input()

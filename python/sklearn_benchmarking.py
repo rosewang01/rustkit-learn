@@ -161,7 +161,7 @@ def run_benchmark(nrows, ncols, filename):
 def main():
     nrows = [10, 100, 1000, 10000]
     ncols = [10, 100, 1000, 10000]
-    filename = "rustkit_benchmarking.csv"
+    filename = "sklearn_benchmarking.csv"
     for i in range(len(nrows)):
         run_benchmark(nrows[i], ncols[i], filename)
     

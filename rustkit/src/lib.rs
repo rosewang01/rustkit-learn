@@ -18,6 +18,8 @@ use unsupervised::pca::PCA;
 pub mod converters;
 use converters::{converter_matrix_test, converter_vector_test};
 
+pub mod benchmarking;
+
 #[pymodule]
 fn rustkit(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<StandardScaler>()?;

@@ -1,3 +1,4 @@
+use crate::benchmarking::log_function_time;
 use crate::converters::{
     python_to_rust_dynamic_matrix, python_to_rust_dynamic_vector, rust_to_python_dynamic_matrix,
     rust_to_python_dynamic_vector,
@@ -64,8 +65,11 @@ impl KMeans {
 
     pub fn fit(&mut self, data: PyReadonlyArray2<f64>) -> PyResult<()> {
         let data = python_to_rust_dynamic_matrix(&data);
-        self.fit_helper(&data);
-        Ok(())
+        let result = log_function_time(|| self.fit_helper(&data), "KMeans::fit");
+        match result {
+            Ok(_) => Ok(()),
+            Err(e) => Err(PyValueError::new_err(e.to_string())),
+        }
     }
 
     pub fn fit_predict(
@@ -74,7 +78,8 @@ impl KMeans {
         data: PyReadonlyArray2<f64>,
     ) -> PyResult<Py<PyArray1<usize>>> {
         let data = python_to_rust_dynamic_matrix(&data);
-        let labels = self.fit_predict_helper(&data);
+        let labels =
+            log_function_time(|| self.fit_predict_helper(&data), "KMeans::fit_predict").unwrap();
         rust_to_python_dynamic_vector(py, labels)
     }
 
@@ -86,7 +91,11 @@ impl KMeans {
     ) -> PyResult<Py<PyFloat>> {
         let data = python_to_rust_dynamic_matrix(&data);
         let labels = python_to_rust_dynamic_vector(&labels);
-        let float = self.compute_inertia_helper(&data, &labels, self.centroids.as_ref().unwrap());
+        let float = log_function_time(
+            || self.compute_inertia_helper(&data, &labels, self.centroids.as_ref().unwrap()),
+            "KMeans::compute_inertia",
+        )
+        .unwrap();
         Ok(PyFloat::new(py, float).into())
     }
 
@@ -96,7 +105,7 @@ impl KMeans {
         data: PyReadonlyArray2<f64>,
     ) -> PyResult<Py<PyArray1<usize>>> {
         let data = python_to_rust_dynamic_matrix(&data);
-        let labels = self.predict_helper(&data);
+        let labels = log_function_time(|| self.predict_helper(&data), "KMeans::predict").unwrap();
         match labels {
             Some(labels) => rust_to_python_dynamic_vector(py, labels),
             None => Err(PyValueError::new_err("Model has not been fitted")),

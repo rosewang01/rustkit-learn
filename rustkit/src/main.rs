@@ -1,5 +1,7 @@
 use nalgebra::{DMatrix, DVector};
+pub mod benchmarking;
 pub mod converters;
+
 mod preprocessing;
 mod supervised;
 mod testing;

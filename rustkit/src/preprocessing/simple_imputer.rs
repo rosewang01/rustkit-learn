@@ -1,3 +1,4 @@
+use crate::benchmarking::log_function_time;
 use crate::converters::{python_to_rust_opt_dynamic_matrix, rust_to_python_dynamic_matrix};
 use nalgebra::DMatrix;
 use numpy::{PyArray2, PyReadonlyArray2};
@@ -57,7 +58,11 @@ impl Imputer {
         data: PyReadonlyArray2<f64>,
     ) -> PyResult<Py<PyArray2<f64>>> {
         let rust_data = python_to_rust_opt_dynamic_matrix(&data);
-        let transformed_data = self.fit_transform_helper(&rust_data);
+        let transformed_data = log_function_time(
+            || self.fit_transform_helper(&rust_data),
+            "Imputer::fit_transform",
+        )
+        .unwrap();
         match transformed_data {
             Ok(data) => rust_to_python_dynamic_matrix(py, data),
             Err(e) => Err(PyValueError::new_err(format!(

@@ -1,3 +1,4 @@
+use crate::benchmarking::log_function_time;
 use crate::converters::python_to_rust_dynamic_vector;
 use nalgebra::DVector;
 use numpy::PyReadonlyArray1;
@@ -18,7 +19,11 @@ impl R2Score {
     ) -> PyResult<Py<PyFloat>> {
         let rust_y_true = python_to_rust_dynamic_vector(&y_true);
         let rust_y_pred = python_to_rust_dynamic_vector(&y_pred);
-        let result = R2Score::compute_helper(&rust_y_true, &rust_y_pred);
+        let result = log_function_time(
+            || R2Score::compute_helper(&rust_y_true, &rust_y_pred),
+            "R2Score::compute",
+        )
+        .unwrap();
         Ok(PyFloat::new(py, result).into())
     }
 }
@@ -76,7 +81,11 @@ impl MSE {
     ) -> PyResult<Py<PyFloat>> {
         let rust_y_true = python_to_rust_dynamic_vector(&y_true);
         let rust_y_pred = python_to_rust_dynamic_vector(&y_pred);
-        let result = MSE::compute_helper(&rust_y_true, &rust_y_pred);
+        let result = log_function_time(
+            || MSE::compute_helper(&rust_y_true, &rust_y_pred),
+            "MSE::compute",
+        )
+        .unwrap();
         Ok(PyFloat::new(py, result).into())
     }
 }

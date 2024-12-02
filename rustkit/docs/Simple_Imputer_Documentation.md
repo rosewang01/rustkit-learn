@@ -1,7 +1,6 @@
+# Rustkit `Imputer` Class Documentation
 
-# Rust `Imputer` Class Documentation
-
-This documentation describes the `Imputer` class. The `Imputer` provides strategies to handle missing values, such as replacing them with the mean of a column or a constant value. The functions can be called on Python data, while the corresponding functions with a `_helper` suffix operate directly in Rust and are used as subroutines for the Python methods. 
+This documentation describes the `Imputer` class. The `Imputer` provides strategies to handle missing values, such as replacing them with the mean of a column or a constant value. The functions can be called on Python data, while the corresponding functions with a `_helper` suffix operate directly in Rust and are used as subroutines for the Python methods.
 
 ---
 
@@ -79,7 +78,6 @@ pub fn new(strategy: ImputationType) -> Self
 
 Performs the imputation on a dataset represented as a matrix of optional floating-point numbers (`DMatrix<Option<f64>>`).
 
-
 ---
 
 ## **Usage Example (in Rust)**
@@ -122,4 +120,3 @@ When using the `fit_transform` method with the `Mean` strategy, ensure that each
 ## **Notes**
 
 - The `Imputer` currently supports only mean and constant value imputation, as defined in the enum.
-

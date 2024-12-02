@@ -1,9 +1,11 @@
+use crate::benchmarking::log_function_time;
 use crate::converters::{
     python_to_rust_dynamic_matrix, python_to_rust_dynamic_vector, rust_to_python_dynamic_matrix,
     rust_to_python_dynamic_vector,
 };
 use nalgebra::{linalg::SVD, DMatrix, DVector, RowDVector};
 use numpy::{PyArray1, PyArray2, PyReadonlyArray1, PyReadonlyArray2};
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
 #[pyclass]
@@ -28,8 +30,16 @@ impl PCA {
 
     pub fn fit(&mut self, data: PyReadonlyArray2<f64>, n_components: i64) -> PyResult<()> {
         let x = python_to_rust_dynamic_matrix(&data);
-        self.fit_helper(&x, n_components.abs() as usize);
-        Ok(())
+        let result = log_function_time(
+            || self.fit_helper(&x, n_components.abs() as usize),
+            "PCA::fit",
+            x.nrows(),
+            x.ncols(),
+        );
+        match result {
+            Ok(_) => Ok(()),
+            Err(e) => Err(PyValueError::new_err(e.to_string())),
+        }
     }
 
     pub fn transform(
@@ -38,7 +48,13 @@ impl PCA {
         data: PyReadonlyArray2<f64>,
     ) -> PyResult<Py<PyArray2<f64>>> {
         let x = python_to_rust_dynamic_matrix(&data);
-        let transformed_data = self.transform_helper(&x);
+        let transformed_data = log_function_time(
+            || self.transform_helper(&x),
+            "PCA::transform",
+            x.nrows(),
+            x.ncols(),
+        )
+        .unwrap();
         rust_to_python_dynamic_matrix(py, transformed_data)
     }
 
@@ -49,7 +65,13 @@ impl PCA {
         n_components: i64,
     ) -> PyResult<Py<PyArray2<f64>>> {
         let x = python_to_rust_dynamic_matrix(&data);
-        let transformed_data = self.fit_transform_helper(&x, n_components.abs() as usize);
+        let transformed_data = log_function_time(
+            || self.fit_transform_helper(&x, n_components.abs() as usize),
+            "PCA::fit_transform",
+            x.nrows(),
+            x.ncols(),
+        )
+        .unwrap();
         rust_to_python_dynamic_matrix(py, transformed_data)
     }
 
@@ -59,7 +81,13 @@ impl PCA {
         data: PyReadonlyArray2<f64>,
     ) -> PyResult<Py<PyArray2<f64>>> {
         let x = python_to_rust_dynamic_matrix(&data);
-        let original_data = self.inverse_transform_helper(&x);
+        let original_data = log_function_time(
+            || self.inverse_transform_helper(&x),
+            "PCA::inverse_transform",
+            x.nrows(),
+            x.ncols(),
+        )
+        .unwrap();
         rust_to_python_dynamic_matrix(py, original_data)
     }
 

@@ -1,5 +1,7 @@
 use nalgebra::{DMatrix, DVector};
+pub mod benchmarking;
 pub mod converters;
+
 mod preprocessing;
 mod supervised;
 mod testing;
@@ -209,7 +211,7 @@ fn sample_kmeans() {
     );
 
     // Number of clusters
-    let k = 3;
+    let k = 2;
     println!("{}", data.row(1));
 
     // Run KMeans with Random initialization

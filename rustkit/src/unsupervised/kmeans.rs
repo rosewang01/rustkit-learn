@@ -1,3 +1,4 @@
+use crate::benchmarking::log_function_time;
 use crate::converters::{
     python_to_rust_dynamic_matrix, python_to_rust_dynamic_vector, rust_to_python_dynamic_matrix,
     rust_to_python_dynamic_vector,
@@ -12,7 +13,7 @@ use rand::seq::SliceRandom;
 use rand::Rng;
 use std::f64;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum InitMethod {
     KMeansPlusPlus,
     Random,
@@ -64,8 +65,21 @@ impl KMeans {
 
     pub fn fit(&mut self, data: PyReadonlyArray2<f64>) -> PyResult<()> {
         let data = python_to_rust_dynamic_matrix(&data);
-        self.fit_helper(&data);
-        Ok(())
+        let fn_name = if self.init_method == InitMethod::KMeansPlusPlus {
+            "KMeans::fit"
+        } else {
+            "KMeans(Random)::fit"
+        };
+        let result = log_function_time(
+            || self.fit_helper(&data),
+            fn_name,
+            data.nrows(),
+            data.ncols(),
+        );
+        match result {
+            Ok(_) => Ok(()),
+            Err(e) => Err(PyValueError::new_err(e.to_string())),
+        }
     }
 
     pub fn fit_predict(
@@ -74,7 +88,13 @@ impl KMeans {
         data: PyReadonlyArray2<f64>,
     ) -> PyResult<Py<PyArray1<usize>>> {
         let data = python_to_rust_dynamic_matrix(&data);
-        let labels = self.fit_predict_helper(&data);
+        let labels = log_function_time(
+            || self.fit_predict_helper(&data),
+            "KMeans::fit_predict",
+            data.nrows(),
+            data.ncols(),
+        )
+        .unwrap();
         rust_to_python_dynamic_vector(py, labels)
     }
 
@@ -86,7 +106,13 @@ impl KMeans {
     ) -> PyResult<Py<PyFloat>> {
         let data = python_to_rust_dynamic_matrix(&data);
         let labels = python_to_rust_dynamic_vector(&labels);
-        let float = self.compute_inertia_helper(&data, &labels, self.centroids.as_ref().unwrap());
+        let float = log_function_time(
+            || self.compute_inertia_helper(&data, &labels, self.centroids.as_ref().unwrap()),
+            "KMeans::compute_inertia",
+            data.nrows(),
+            data.ncols(),
+        )
+        .unwrap();
         Ok(PyFloat::new(py, float).into())
     }
 
@@ -96,7 +122,13 @@ impl KMeans {
         data: PyReadonlyArray2<f64>,
     ) -> PyResult<Py<PyArray1<usize>>> {
         let data = python_to_rust_dynamic_matrix(&data);
-        let labels = self.predict_helper(&data);
+        let labels = log_function_time(
+            || self.predict_helper(&data),
+            "KMeans::predict",
+            data.nrows(),
+            data.ncols(),
+        )
+        .unwrap();
         match labels {
             Some(labels) => rust_to_python_dynamic_vector(py, labels),
             None => Err(PyValueError::new_err("Model has not been fitted")),
@@ -173,7 +205,12 @@ impl KMeans {
         let mut indices: Vec<usize> = (0..data.nrows()).collect();
         indices.shuffle(&mut rng);
         let selected = indices.iter().take(self.k).copied().collect::<Vec<usize>>();
-        DMatrix::from_rows(&selected.iter().map(|&i| data.row(i)).collect::<Vec<_>>())
+        DMatrix::from_columns(
+            &selected
+                .iter()
+                .map(|&i| data.row(i).transpose())
+                .collect::<Vec<_>>(),
+        )
     }
 
     // Implements KMeans++ initialization to choose centroids
@@ -217,16 +254,24 @@ impl KMeans {
 
     // Assigns each data point to the nearest centroid
     fn assign_labels(&self, data: &DMatrix<f64>, centroids: &DMatrix<f64>) -> DVector<usize> {
+        // Map each data point to the index of its closest centroid
         DVector::from_iterator(
             data.nrows(),
-            data.row_iter().map(|row| {
-                centroids
+            data.row_iter().map(|data_point| {
+                // For the current data point, calculate the distance to each centroid
+                let closest_centroid = centroids
                     .column_iter()
-                    .enumerate()
-                    .map(|(i, centroid)| (i, (row - centroid.transpose()).norm_squared()))
-                    .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
-                    .unwrap()
-                    .0
+                    .enumerate() // Keep track of the centroid index
+                    .map(|(centroid_idx, centroid)| {
+                        // Compute the squared Euclidean distance to the centroid
+                        let distance = (data_point - centroid.transpose()).norm_squared();
+                        (centroid_idx, distance)
+                    })
+                    // Find the centroid with the smallest distance
+                    .min_by(|(_, dist_a), (_, dist_b)| dist_a.partial_cmp(dist_b).unwrap())
+                    .unwrap(); // Unwrap is safe because centroids is non-empty
+
+                closest_centroid.0 // Return the index of the closest centroid
             }),
         )
     }

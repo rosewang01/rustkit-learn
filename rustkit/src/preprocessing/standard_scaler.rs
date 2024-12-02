@@ -1,6 +1,8 @@
+use crate::benchmarking::log_function_time;
 use crate::converters::{python_to_rust_dynamic_matrix, rust_to_python_dynamic_matrix};
 use nalgebra::{DMatrix, DVector};
 use numpy::{PyArray2, PyReadonlyArray2};
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
 #[pyclass]
@@ -25,8 +27,17 @@ impl StandardScaler {
     // Wrapper for the `fit` method
     pub fn fit(&mut self, data: PyReadonlyArray2<f64>) -> PyResult<()> {
         let rust_data = python_to_rust_dynamic_matrix(&data);
-        self.fit_helper(&rust_data);
-        Ok(())
+        let shape = rust_data.shape();
+        let result = log_function_time(
+            || self.fit_helper(&rust_data),
+            "StandardScaler::fit",
+            shape.0,
+            shape.1,
+        );
+        match result {
+            Ok(_) => Ok(()),
+            Err(e) => Err(PyValueError::new_err(e.to_string())),
+        }
     }
 
     // Wrapper for the `transform` method
@@ -36,7 +47,14 @@ impl StandardScaler {
         data: PyReadonlyArray2<f64>,
     ) -> PyResult<Py<PyArray2<f64>>> {
         let rust_data = python_to_rust_dynamic_matrix(&data);
-        let transformed_data = self.transform_helper(&rust_data);
+        let shape = rust_data.shape();
+        let transformed_data = log_function_time(
+            || self.transform_helper(&rust_data),
+            "StandardScaler::transform",
+            shape.0,
+            shape.1,
+        )
+        .unwrap();
         rust_to_python_dynamic_matrix(py, transformed_data)
     }
 
@@ -47,7 +65,14 @@ impl StandardScaler {
         data: PyReadonlyArray2<f64>,
     ) -> PyResult<Py<PyArray2<f64>>> {
         let rust_data = python_to_rust_dynamic_matrix(&data);
-        let transformed_data = self.fit_transform_helper(&rust_data);
+        let shape = rust_data.shape();
+        let transformed_data = log_function_time(
+            || self.fit_transform_helper(&rust_data),
+            "StandardScaler::fit_transform",
+            shape.0,
+            shape.1,
+        )
+        .unwrap();
         rust_to_python_dynamic_matrix(py, transformed_data)
     }
 
@@ -58,7 +83,14 @@ impl StandardScaler {
         scaled_data: PyReadonlyArray2<f64>,
     ) -> PyResult<Py<PyArray2<f64>>> {
         let rust_scaled_data = python_to_rust_dynamic_matrix(&scaled_data);
-        let original_data = self.inverse_transform_helper(&rust_scaled_data);
+        let shape = rust_scaled_data.shape();
+        let original_data = log_function_time(
+            || self.inverse_transform_helper(&rust_scaled_data),
+            "StandardScaler::inverse_transform",
+            shape.0,
+            shape.1,
+        )
+        .unwrap();
         rust_to_python_dynamic_matrix(py, original_data)
     }
 }

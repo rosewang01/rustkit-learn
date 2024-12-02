@@ -1,21 +1,6 @@
 import rustkit
 import numpy as np
 
-def print_vector(vector):
-    print("[", end=" ")
-    for i in range(len(vector)):
-        print(f"{vector[i]:.4f}", end=" " if i < len(vector) - 1 else "")
-    print("]")
-
-def print_matrix(matrix):
-    print("[")
-    for row in matrix:
-        print(" [", end=" ")
-        for element in row:
-            print(f"{element:.4f}", end=" ")
-        print("]")
-    print("]")
-
 def test_converter_vector():
     print("=" * 77)
     print("VECTOR TEST")
@@ -27,9 +12,9 @@ def test_converter_vector():
     
     print("Vector test")
     print("Input vector:")
-    print_vector(input_vector)
+    print(input_vector)
     print("Result vector:")
-    print_vector(result_vector)
+    print(result_vector)
     assert np.array_equal(input_vector, result_vector), "Test failed! Input and output vectors are not equal."
     print("Vector test passed!")
 
@@ -44,9 +29,9 @@ def test_converter_matrix():
     result_matrix = np.array(result)
     
     print("Input matrix:")
-    print_matrix(input_matrix)
+    print(input_matrix)
     print("Result matrix:")
-    print_matrix(result_matrix)
+    print(result_matrix)
     assert np.array_equal(input_matrix, result_matrix), "Test failed! Input and output matrices are not equal."
     print("Matrix test passed!")
 
@@ -65,11 +50,11 @@ def sample_scaler():
     scaler = rustkit.StandardScaler()
     standardized_data = scaler.fit_transform(data)
     print("Standardized Data:")
-    print_matrix(standardized_data)
+    print(standardized_data)
     
     original_data = scaler.inverse_transform(standardized_data)
     print("Original Data (after inverse transform):")
-    print_matrix(original_data)
+    print(original_data)
 
 def sample_pca():
     print("=" * 77)
@@ -86,17 +71,17 @@ def sample_pca():
     pca = rustkit.PCA()
     transformed_data = pca.fit_transform(data, 2)
     print("Original Data:")
-    print_matrix(data)
+    print(data)
     print("Transformed Data:")
-    print_matrix(transformed_data)
+    print(transformed_data)
     print("Principal Components:")
-    print_matrix(pca.components)
+    print(pca.components)
     print("Explained Variance:")
-    print_vector(pca.explained_variance)
+    print(pca.explained_variance)
     
     original_data = pca.inverse_transform(transformed_data)
     print("Reconstructed Data (after inverse transform):")
-    print_matrix(original_data)
+    print(original_data)
 
 def sample_ridge():
     print("=" * 77)
@@ -114,18 +99,18 @@ def sample_ridge():
     ridge_with_bias = rustkit.RidgeRegression(1.0, True)
     ridge_with_bias.fit(x, y)
     print("With Bias - Weights:")
-    print_vector(ridge_with_bias.weights)
+    print(ridge_with_bias.weights)
     print("With Bias - Intercept:", ridge_with_bias.intercept)
     print("With Bias - Predictions:")
-    print_vector(ridge_with_bias.predict(x))
+    print(ridge_with_bias.predict(x))
     
     ridge_no_bias = rustkit.RidgeRegression(1.0, False)
     ridge_no_bias.fit(x, y)
     print("No Bias - Weights:")
-    print_vector(ridge_no_bias.weights)
+    print(ridge_no_bias.weights)
     print("No Bias - Intercept:", ridge_no_bias.intercept)
     print("No Bias - Predictions:")
-    print_vector(ridge_no_bias.predict(x))
+    print(ridge_no_bias.predict(x))
 
 def sample_r2():
     print("=" * 77)
@@ -165,9 +150,9 @@ def sample_kmeans():
     
     print("Results with Random Initialization:")
     print("Labels:")
-    print_vector(labels)
+    print(labels)
     print("Centroids:")
-    print_matrix(kmeans.centroids)
+    print(kmeans.centroids)
     print("Total Inertia:", inertia)
 
 if __name__ == "__main__":

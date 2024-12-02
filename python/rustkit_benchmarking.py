@@ -130,35 +130,38 @@ def benchmark_kmeans(X, n_clusters=3, n_iterations=10):
 
 def run_benchmark(nrows, ncols, filename):
     X = np.random.rand(nrows, ncols)
-    X_clustered = make_blobs(n_samples=nrows, n_features=10, centers=3, random_state=42)[0]
+    X_clustered = make_blobs(n_samples=nrows, n_features=ncols, centers=3, random_state=42)[0]
     y = np.random.rand(nrows)
     y_true = np.random.rand(nrows)
     y_pred = np.random.rand(nrows)
     
-    # pca_time = benchmark_pca(X)
-    standard_scaler_time = benchmark_standard_scaler(X, 50)
-    # ridge_time = benchmark_ridge(X, y)
-    r2_time = benchmark_r2(y_true, y_pred, 50)
-    mse_time = benchmark_mse(y_true, y_pred, 50)
-    # kmeans_time = benchmark_kmeans(X_clustered)
-    # kmeans_random_time = benchmark_kmeans_random(X_clustered)
+    pca_time = benchmark_pca(X, n_iterations=50)
+    standard_scaler_time = benchmark_standard_scaler(X, n_iterations=50)
+    ridge_time = benchmark_ridge(X, y, n_iterations=50)
+    r2_time = benchmark_r2(y_true, y_pred, n_iterations=50)
+    mse_time = benchmark_mse(y_true, y_pred, n_iterations=50)
+    kmeans_time = benchmark_kmeans(X_clustered, n_iterations=50)
+    kmeans_random_time = benchmark_kmeans_random(X_clustered, n_iterations=50)
     
     with open(filename, "a") as f:
-        # f.write(f"PCA::fit_transform,{nrows},{ncols},{pca_time}\n")
+        f.write(f"PCA::fit_transform,{nrows},{ncols},{pca_time}\n")
         f.write(f"StandardScaler::fit_transform,{nrows},{ncols},{standard_scaler_time}\n")
-        # f.write(f"RidgeRegression::fit,{nrows},{ncols},{ridge_time}\n")
-        f.write(f"R2Score::compute,{1},{ncols},{r2_time}\n")
-        f.write(f"MSE::compute,{1},{ncols},{mse_time}\n")
-        # f.write(f"KMeans::fit,{nrows},{10},{kmeans_time}\n")
-        # f.write(f"KMeans(Random)::fit,{nrows},{10},{kmeans_random_time}\n")    
+        f.write(f"RidgeRegression::fit,{nrows},{ncols},{ridge_time}\n")
+        f.write(f"R2Score::compute,{1},{nrows},{r2_time}\n")
+        f.write(f"MSE::compute,{1},{nrows},{mse_time}\n")
+        f.write(f"KMeans::fit,{nrows},{ncols},{kmeans_time}\n")
+        f.write(f"KMeans(Random)::fit,{nrows},{ncols},{kmeans_random_time}\n")
 
 
 def main():
     nrows = [10, 50, 100, 250, 500, 750, 1000]
-    ncols = [10, 50, 100, 250, 500, 750, 1000]
-    filename = "rustkit_benchmarking.csv"
-    for i in range(len(nrows)):
-        run_benchmark(nrows[i], ncols[i], filename)
+    ncols = [2, 5, 10, 25, 50]
+    filename = "logs/rustkit_benchmarking.csv"
+    for nrow in nrows:
+        run_benchmark(nrow, 10, filename)
+    
+    for ncol in ncols:
+        run_benchmark(1000, ncol, filename)
     
 
 if __name__ == "__main__":

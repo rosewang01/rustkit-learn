@@ -1,7 +1,7 @@
 
 # Rust `Imputer` Class Documentation
 
-This documentation describes the `Imputer` class, a utility inspired by Scikit-learn for performing missing data imputation on a dataset represented as a matrix. The `Imputer` provides strategies to handle missing values, such as replacing them with the mean of a column or a constant value.
+This documentation describes the `Imputer` class. The `Imputer` provides strategies to handle missing values, such as replacing them with the mean of a column or a constant value. The functions can be called on Python data, while the corresponding functions with a `_helper` suffix operate directly in Rust and are used as subroutines for the Python methods. 
 
 ---
 
@@ -40,7 +40,7 @@ An error type representing a failure in the imputation process, specifically whe
 
 ### `ImputationType`
 
-Represents the strategy to use for imputing missing values.
+Represents the strategy to use for imputing missing values. When calling from Python, imputation strategy should be passed as a string: 'mean' or 'constant'.
 
 #### **Variants**
 
@@ -79,27 +79,10 @@ pub fn new(strategy: ImputationType) -> Self
 
 Performs the imputation on a dataset represented as a matrix of optional floating-point numbers (`DMatrix<Option<f64>>`).
 
-#### **Signature**
-
-```rust
-pub fn fit_transform(&self, data: &DMatrix<Option<f64>>) -> Result<DMatrix<f64>, ImputerError>
-```
-
-#### **Parameters**
-
-- `data`: `&DMatrix<Option<f64>>`  
-   A reference to the input dataset with potential missing values (`Option<f64>`).
-
-#### **Returns**
-
-- `Ok(DMatrix<f64>)`  
-   A matrix where all missing values have been imputed based on the chosen strategy.
-- `Err(ImputerError)`  
-   If mean imputation is selected and a column has no non-missing values, the method returns an `ImputerError`.
 
 ---
 
-## **Usage Example**
+## **Usage Example (in Rust)**
 
 ```rust
 use nalgebra::DMatrix;
@@ -120,7 +103,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let imputer = Imputer::new(ImputationType::Mean);
 
     // Perform the imputation
-    let transformed = imputer.fit_transform(&data)?;
+    let transformed = imputer.fit_transform_helper(&data)?;
 
     println!("Imputed Data:\n{}", transformed);
 
@@ -136,27 +119,7 @@ When using the `fit_transform` method with the `Mean` strategy, ensure that each
 
 ---
 
-## **Dependencies**
-
-This implementation relies on the following external crates:
-
-- `nalgebra`  
-  Provides the `DMatrix` type used for matrix operations.
-
-To include these dependencies, add the following to your `Cargo.toml`:
-
-```toml
-[dependencies]
-nalgebra = "0.31"
-```
-
----
-
 ## **Notes**
 
-- The `Imputer` currently supports only mean and constant value imputation.
-- For large datasets, consider optimizing the implementation for performance.
+- The `Imputer` currently supports only mean and constant value imputation, as defined in the enum.
 
----
-
-Happy coding! 🎉

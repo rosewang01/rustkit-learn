@@ -1,6 +1,6 @@
 use std::fs::OpenOptions;
 use std::io::{self, Write};
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::Instant;
 
 pub fn log_function_time<F, T>(
     mut func: F,
@@ -24,7 +24,7 @@ where
 
     writeln!(
         file,
-        "{},{},{},{:?}",
+        "{},{},{},{}",
         func_name, input_rows, input_cols, runtime
     )?;
 

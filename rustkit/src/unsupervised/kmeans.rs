@@ -13,7 +13,7 @@ use rand::seq::SliceRandom;
 use rand::Rng;
 use std::f64;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum InitMethod {
     KMeansPlusPlus,
     Random,
@@ -65,9 +65,14 @@ impl KMeans {
 
     pub fn fit(&mut self, data: PyReadonlyArray2<f64>) -> PyResult<()> {
         let data = python_to_rust_dynamic_matrix(&data);
+        let fn_name = if self.init_method == InitMethod::KMeansPlusPlus {
+            "KMeans::fit"
+        } else {
+            "KMeans(Random)::fit"
+        };
         let result = log_function_time(
             || self.fit_helper(&data),
-            "KMeans::fit",
+            fn_name,
             data.nrows(),
             data.ncols(),
         );
@@ -200,7 +205,12 @@ impl KMeans {
         let mut indices: Vec<usize> = (0..data.nrows()).collect();
         indices.shuffle(&mut rng);
         let selected = indices.iter().take(self.k).copied().collect::<Vec<usize>>();
-        DMatrix::from_columns(&selected.iter().map(|&i| data.row(i).transpose()).collect::<Vec<_>>())
+        DMatrix::from_columns(
+            &selected
+                .iter()
+                .map(|&i| data.row(i).transpose())
+                .collect::<Vec<_>>(),
+        )
     }
 
     // Implements KMeans++ initialization to choose centroids
@@ -260,12 +270,11 @@ impl KMeans {
                     // Find the centroid with the smallest distance
                     .min_by(|(_, dist_a), (_, dist_b)| dist_a.partial_cmp(dist_b).unwrap())
                     .unwrap(); // Unwrap is safe because centroids is non-empty
-                
+
                 closest_centroid.0 // Return the index of the closest centroid
             }),
         )
     }
-    
 
     // Updates centroids based on the mean of assigned points
     fn update_centroids(&self, data: &DMatrix<f64>, labels: &DVector<usize>) -> DMatrix<f64> {

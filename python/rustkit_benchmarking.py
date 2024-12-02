@@ -5,6 +5,8 @@ import rustkit
 from sklearn.datasets import make_blobs
 
 def benchmark_pca(X, n_components=2, n_iterations=100):
+    if X.shape[0] == 1000:
+        n_iterations = 5
     def fit_pca(X):
         pca = rustkit.PCA()
         return pca.fit_transform(X, n_components)
@@ -23,6 +25,8 @@ def benchmark_pca(X, n_components=2, n_iterations=100):
 
 
 def benchmark_standard_scaler(X, n_iterations=100):
+    if X.shape[0] == 1000:
+        n_iterations = 5
     def fit_standard_scaler(X):
         scaler = rustkit.StandardScaler()
         return scaler.fit_transform(X)
@@ -93,6 +97,8 @@ def benchmark_mse(y_true, y_pred, n_iterations=100):
 
 
 def benchmark_kmeans_random(X, n_clusters=10, n_iterations=100):
+    if X.shape[0] == 1000:
+        n_iterations = 2
     def fit_kmeans(X):
         kmeans = rustkit.KMeans(n_clusters, "random", 200, 10)
         kmeans.fit(X)
@@ -111,6 +117,8 @@ def benchmark_kmeans_random(X, n_clusters=10, n_iterations=100):
     return average_time
 
 def benchmark_kmeans(X, n_clusters=10, n_iterations=100):
+    if X.shape[0] == 1000:
+        n_iterations = 2
     def fit_kmeans(X):
         kmeans = rustkit.KMeans(n_clusters, "kmeans++", 200, 10)
         kmeans.fit(X)
@@ -130,8 +138,7 @@ def benchmark_kmeans(X, n_clusters=10, n_iterations=100):
 
 def run_benchmark(nrows, ncols, filename):
     X = np.random.rand(nrows, ncols)
-    # FLAG: fix when bug is fixed
-    X_clustered = make_blobs(n_samples=nrows, n_features=10, centers=10, random_state=42)[0]
+    X_clustered = make_blobs(n_samples=nrows, n_features=10, centers=3, random_state=42)[0]
     y = np.random.rand(nrows)
     y_true = np.random.rand(nrows)
     y_pred = np.random.rand(nrows)
@@ -150,13 +157,15 @@ def run_benchmark(nrows, ncols, filename):
         f.write(f"RidgeRegression::fit,{nrows},{ncols},{ridge_time}\n")
         f.write(f"R2Score::compute,{1},{ncols},{r2_time}\n")
         f.write(f"MSE::compute,{1},{ncols},{mse_time}\n")
-        f.write(f"KMeans::fit,{nrows},{ncols},{kmeans_time}\n")
-        f.write(f"KMeans(Random)::fit,{nrows},{ncols},{kmeans_random_time}\n")    
+        f.write(f"KMeans::fit,{nrows},{10},{kmeans_time}\n")
+        f.write(f"KMeans(Random)::fit,{nrows},{10},{kmeans_random_time}\n")    
 
 
 def main():
-    nrows = [10, 100, 1000, 10000]
-    ncols = [10, 100, 1000, 10000]
+    # nrows = [10, 100, 1000, 10000]
+    # ncols = [10, 100, 1000, 10000]
+    nrows = [1000]
+    ncols = [1000]
     filename = "rustkit_benchmarking.csv"
     for i in range(len(nrows)):
         run_benchmark(nrows[i], ncols[i], filename)

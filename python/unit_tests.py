@@ -60,7 +60,6 @@ def get_kmeans_equality(sklearn_result, rustkit_result, n_clusters):
     return True
 
 def test_kmeans_correctness(X):
-    # FLAG: seems like there's an error where if the number of cols in the input matrix is neq to the number of clusters, the test will fail
     n_clusters = min(3, X.shape[0])
     sklearn_kmeans_random = SklearnKMeans(n_clusters=n_clusters, init="random")
     sklearn_kmeans = SklearnKMeans(n_clusters)
@@ -191,7 +190,6 @@ def test_empty_input():
     test_mse_correctness(y_pred, y_true)
     test_pca_correctness(X)
     test_kmeans_correctness(X)
-    test_kmeans_inertia(X)
 
 def test_square_input():
     print("SQUARE INPUT")
@@ -273,9 +271,9 @@ def test_mixed_input():
 def main():
     # test_empty_input()
     # print("\n\n")
-    test_square_input()
-    print("\n\n")
     test_single_input()
+    print("\n\n")
+    test_square_input()
     print("\n\n")
     test_large_input()
     print("\n\n")

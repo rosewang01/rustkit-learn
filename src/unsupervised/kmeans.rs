@@ -99,7 +99,7 @@ impl KMeans {
         let mut indices: Vec<usize> = (0..data.nrows()).collect();
         indices.shuffle(&mut rng);
         let selected = indices.iter().take(self.k).copied().collect::<Vec<usize>>();
-        DMatrix::from_rows(&selected.iter().map(|&i| data.row(i)).collect::<Vec<_>>())
+        DMatrix::from_columns(&selected.iter().map(|&i| data.row(i).transpose()).collect::<Vec<_>>())
     }
 
     // Implements KMeans++ initialization to choose centroids
@@ -142,19 +142,28 @@ impl KMeans {
 
     // Assigns each data point to the nearest centroid
     fn assign_labels(&self, data: &DMatrix<f64>, centroids: &DMatrix<f64>) -> DVector<usize> {
+        // Map each data point to the index of its closest centroid
         DVector::from_iterator(
             data.nrows(),
-            data.row_iter().map(|row| {
-                centroids
+            data.row_iter().map(|data_point| {
+                // For the current data point, calculate the distance to each centroid
+                let closest_centroid = centroids
                     .column_iter()
-                    .enumerate()
-                    .map(|(i, centroid)| (i, (row - centroid.transpose()).norm_squared()))
-                    .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
-                    .unwrap()
-                    .0
+                    .enumerate() // Keep track of the centroid index
+                    .map(|(centroid_idx, centroid)| {
+                        // Compute the squared Euclidean distance to the centroid
+                        let distance = (data_point - centroid.transpose()).norm_squared();
+                        (centroid_idx, distance)
+                    })
+                    // Find the centroid with the smallest distance
+                    .min_by(|(_, dist_a), (_, dist_b)| dist_a.partial_cmp(dist_b).unwrap())
+                    .unwrap(); // Unwrap is safe because centroids is non-empty
+                
+                closest_centroid.0 // Return the index of the closest centroid
             }),
         )
     }
+    
 
     // Updates centroids based on the mean of assigned points
     fn update_centroids(&self, data: &DMatrix<f64>, labels: &DVector<usize>) -> DMatrix<f64> {

@@ -172,8 +172,8 @@ fn sample_imputer() {
         ],
     );
 
-    let imputer_mean = Imputer::new("mean", None);
-    let imputer_cons = Imputer::new("constant", Some(-1.0));
+    let mut imputer_mean = Imputer::new("mean", None);
+    let mut imputer_cons = Imputer::new("constant", Some(-1.0));
     match imputer_mean.fit_transform_helper(&data) {
         Ok(imputed_data) => {
             println!("Original data:\n{:?}", data);

@@ -149,8 +149,8 @@ fn sample_imputer() {
         ],
     );
 
-    let imputer_mean = Imputer::new(ImputationType::Mean);
-    let imputer_cons = Imputer::new(ImputationType::Constant(-1.0));
+    let mut imputer_mean = Imputer::new(ImputationType::Mean);
+    let mut imputer_cons = Imputer::new(ImputationType::Constant(-1.0));
     match imputer_mean.fit_transform(&data) {
         Ok(imputed_data) => {
             println!("Original data:\n{:?}", data);

@@ -139,13 +139,13 @@ def run_benchmark(nrows, ncols, filename):
     y_true = np.random.rand(nrows)
     y_pred = np.random.rand(nrows)
     
-    pca_time = benchmark_pca(X)
-    standard_scaler_time = benchmark_standard_scaler(X)
-    ridge_time = benchmark_ridge(X, y)
-    r2_time = benchmark_r2(y_true, y_pred)
-    mse_time = benchmark_mse(y_true, y_pred)
-    kmeans_time = benchmark_kmeans(X_clustered, n_clusters=3)
-    kmeans_random_time = benchmark_kmeans_random(X_clustered, n_clusters=3)
+    pca_time = benchmark_pca(X, n_iterations=50)
+    standard_scaler_time = benchmark_standard_scaler(X, n_iterations=50)
+    ridge_time = benchmark_ridge(X, y, n_iterations=50)
+    r2_time = benchmark_r2(y_true, y_pred, n_iterations=50)
+    mse_time = benchmark_mse(y_true, y_pred, n_iterations=50)
+    kmeans_time = benchmark_kmeans(X_clustered, n_clusters=3, n_iterations=50)
+    kmeans_random_time = benchmark_kmeans_random(X_clustered, n_clusters=3, n_iterations=50)
     
     with open(filename, "a") as f:
         f.write(f"PCA::fit_transform,{nrows},{ncols},{pca_time}\n")

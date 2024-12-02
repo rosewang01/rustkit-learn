@@ -135,22 +135,22 @@ def run_benchmark(nrows, ncols, filename):
     y_true = np.random.rand(nrows)
     y_pred = np.random.rand(nrows)
     
-    pca_time = benchmark_pca(X)
-    standard_scaler_time = benchmark_standard_scaler(X)
-    ridge_time = benchmark_ridge(X, y)
-    r2_time = benchmark_r2(y_true, y_pred)
-    mse_time = benchmark_mse(y_true, y_pred)
-    kmeans_time = benchmark_kmeans(X_clustered)
-    kmeans_random_time = benchmark_kmeans_random(X_clustered)
+    # pca_time = benchmark_pca(X)
+    standard_scaler_time = benchmark_standard_scaler(X, 50)
+    # ridge_time = benchmark_ridge(X, y)
+    r2_time = benchmark_r2(y_true, y_pred, 50)
+    mse_time = benchmark_mse(y_true, y_pred, 50)
+    # kmeans_time = benchmark_kmeans(X_clustered)
+    # kmeans_random_time = benchmark_kmeans_random(X_clustered)
     
     with open(filename, "a") as f:
-        f.write(f"PCA::fit_transform,{nrows},{ncols},{pca_time}\n")
+        # f.write(f"PCA::fit_transform,{nrows},{ncols},{pca_time}\n")
         f.write(f"StandardScaler::fit_transform,{nrows},{ncols},{standard_scaler_time}\n")
-        f.write(f"RidgeRegression::fit,{nrows},{ncols},{ridge_time}\n")
+        # f.write(f"RidgeRegression::fit,{nrows},{ncols},{ridge_time}\n")
         f.write(f"R2Score::compute,{1},{ncols},{r2_time}\n")
         f.write(f"MSE::compute,{1},{ncols},{mse_time}\n")
-        f.write(f"KMeans::fit,{nrows},{10},{kmeans_time}\n")
-        f.write(f"KMeans(Random)::fit,{nrows},{10},{kmeans_random_time}\n")    
+        # f.write(f"KMeans::fit,{nrows},{10},{kmeans_time}\n")
+        # f.write(f"KMeans(Random)::fit,{nrows},{10},{kmeans_random_time}\n")    
 
 
 def main():

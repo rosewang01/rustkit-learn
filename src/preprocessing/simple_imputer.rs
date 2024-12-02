@@ -1,6 +1,5 @@
 use nalgebra::DMatrix;
-use::std::fmt;
-use std::collections::HashMap;
+use std::fmt;
 
 #[derive(Debug)]
 pub struct ImputerError {
@@ -9,7 +8,11 @@ pub struct ImputerError {
 
 impl fmt::Display for ImputerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Column {} has no non-missing values to compute the mean.", self.column_index)
+        write!(
+            f,
+            "Column {} has no non-missing values to compute the mean.",
+            self.column_index
+        )
     }
 }
 
@@ -23,7 +26,7 @@ pub enum ImputationType {
 
 pub struct Imputer {
     strategy: ImputationType,
-    impute_values: Option<HashMap<usize, f64>>,
+    impute_values: Option<Vec<f64>>,
 }
 
 impl Imputer {
@@ -35,18 +38,18 @@ impl Imputer {
     }
 
     pub fn fit_transform(&mut self, data: &DMatrix<Option<f64>>) -> Result<DMatrix<f64>, ImputerError> {
-        // Fit the imputer to compute imputation values
+        // Call `fit` and propagate errors if any
         self.fit(data)?;
-
-        // Transform the data using the computed imputation values
-        self.transform(data)
+        
+        // If `fit` succeeds, call `transform` (which assumes fitting has already been done)
+        Ok(self.transform(data))
     }
 
 
     /// Fits the imputer to the data, computing imputation values for each column.
     pub fn fit(&mut self, data: &DMatrix<Option<f64>>) -> Result<(), ImputerError> {
         let (_, ncols) = data.shape();
-        let mut impute_values = HashMap::new();
+        let mut impute_values = Vec::new();
 
         for j in 0..ncols {
             let column = data.column(j);
@@ -72,36 +75,34 @@ impl Imputer {
                 ImputationType::Constant(val) => *val,
             };
 
-            impute_values.insert(j, impute_value);
+            impute_values.push(impute_value);
         }
 
         self.impute_values = Some(impute_values);
         Ok(())
     }
 
-    /// Transforms the data using the computed imputation values.
-    pub fn transform(&self, data: &DMatrix<Option<f64>>) -> Result<DMatrix<f64>, ImputerError> {
-        let (nrows, ncols) = data.shape();
-        let mut result = DMatrix::zeros(nrows, ncols);
-
+    /// Transforms the data using the computed imputation values. Panics if the imputer has not been fitted.
+    pub fn transform(&self, data: &DMatrix<Option<f64>>) -> DMatrix<f64> {
         if self.impute_values.is_none() {
-            return Err(ImputerError {
-                column_index: usize::MAX, // Indicate fitting wasn't done
-            });
+            panic!("Imputer has not been fitted yet. Please call `fit` before `transform`.");
         }
 
         let impute_values = self.impute_values.as_ref().unwrap();
+        let (nrows, ncols) = data.shape();
+        let mut result = DMatrix::zeros(nrows, ncols);
 
         for j in 0..ncols {
             let column = data.column(j);
 
-            let impute_value = impute_values.get(&j).ok_or(ImputerError { column_index: j })?;
+            // Use the pre-computed imputation value for the column
+            let impute_value = impute_values[j];
 
             for i in 0..nrows {
-                result[(i, j)] = column[i].unwrap_or(*impute_value);
+                result[(i, j)] = column[i].unwrap_or(impute_value);
             }
         }
 
-        Ok(result)
+        result
     }
 }

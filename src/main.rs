@@ -19,10 +19,12 @@ fn main() {
     sample_ridge();
     print!("\n \n");
     sample_r2();
-    print!("\n \n");
-    sample_imputer();
+
     print!("\n \n");
     sample_kmeans();
+
+    print!("\n \n");
+    sample_imputer();
 }
 
 fn sample_ridge() {
@@ -143,7 +145,7 @@ fn sample_imputer() {
         3,
         3,
         &[
-            Some(1.0), None, None,
+            Some(1.0), None, Some(0.5),
             Some(4.0), Some(5.0), None,
             None, Some(8.0), None,
         ],
@@ -151,19 +153,29 @@ fn sample_imputer() {
 
     let mut imputer_mean = Imputer::new(ImputationType::Mean);
     let mut imputer_cons = Imputer::new(ImputationType::Constant(-1.0));
-    match imputer_mean.fit_transform(&data) {
-        Ok(imputed_data) => {
+    match imputer_mean.fit(&data) {
+        Ok(()) => {
             println!("Original data:\n{:?}", data);
-            println!("Mean imputed data:\n{}", imputed_data);
+            println!("Mean imputed data:\n{}", imputer_mean.transform(&data));
         }
         Err(e) => eprintln!("Mean imputation error: {}", e),
     }
-    match imputer_cons.fit_transform(&data) {
-        Ok(imputed_data) => {
-            println!("Mean imputed data:\n{}", imputed_data);
-        }
-        Err(e) => eprintln!("Cons imputation error: {}", e),
-    }
+    // match imputer_cons.fit_transform(&data) {
+    //     Ok(imputed_data) => {
+    //         println!("Mean imputed data:\n{}", imputed_data);
+    //     }
+    //     Err(e) => eprintln!("Cons imputation error: {}", e),
+    // }
+
+    let test_data = DMatrix::from_row_slice(
+        2,
+        3,
+        &[
+            None, Some(1.1), None,
+            Some(6.0), None, None,
+        ],
+    );
+    println!("Mean imputed test data:\n{}", imputer_mean.transform(&test_data));
 }
 
 

@@ -62,10 +62,12 @@ def get_kmeans_equality(sklearn_result, rustkit_result, n_clusters):
 def test_kmeans_correctness(X):
     # FLAG: seems like there's an error where if the number of cols in the input matrix is neq to the number of clusters, the test will fail
     n_clusters = X.shape[1]
+    sklearn_kmeans_random = SklearnKMeans(n_clusters=n_clusters, init="random")
     sklearn_kmeans = SklearnKMeans(n_clusters)
     rustkit_kmeans_random = rustkit.KMeans(n_clusters, "random", 200, 10)
     rustkit_kmeans = rustkit.KMeans(n_clusters, "kmeans++", 200, 10)
     
+    sklearn_result_random = sklearn_kmeans_random.fit_predict(X)
     sklearn_result = sklearn_kmeans.fit_predict(X)
     rustkit_result_random = rustkit_kmeans_random.fit_predict(X)
     rustkit_result = rustkit_kmeans.fit_predict(X)
@@ -79,7 +81,7 @@ def test_kmeans_correctness(X):
         print("Rustkit KMeans result:")
         print(rustkit_result)
     
-    if (get_kmeans_equality(sklearn_result, rustkit_result_random, n_clusters)):
+    if (get_kmeans_equality(sklearn_result_random, rustkit_result_random, n_clusters)):
         print("KMeans - Random correctness test passed!")
     else:
         print("KMeans - Random correctness test failed!")

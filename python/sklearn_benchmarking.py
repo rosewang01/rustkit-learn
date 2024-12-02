@@ -1,13 +1,17 @@
 import numpy as np
 import time
 from tqdm import tqdm
-import rustkit
+from sklearn.decomposition import PCA as SklearnPCA
+from sklearn.metrics import r2_score
+from sklearn.preprocessing import StandardScaler as SklearnStandardScaler
+from sklearn.linear_model import Ridge as SklearnRidgeRegression
+from sklearn.cluster import KMeans as SklearnKMeans
 from sklearn.datasets import make_blobs
 
 def benchmark_pca(X, n_components=2, n_iterations=100):
     def fit_pca(X):
-        pca = rustkit.PCA()
-        return pca.fit_transform(X, n_components)
+        pca = SklearnPCA(n_components)
+        return pca.fit_transform(X)
     
     total_time = 0
     
@@ -24,7 +28,7 @@ def benchmark_pca(X, n_components=2, n_iterations=100):
 
 def benchmark_standard_scaler(X, n_iterations=100):
     def fit_standard_scaler(X):
-        scaler = rustkit.StandardScaler()
+        scaler = SklearnStandardScaler()
         return scaler.fit_transform(X)
     
     total_time = 0
@@ -42,7 +46,7 @@ def benchmark_standard_scaler(X, n_iterations=100):
 
 def benchmark_ridge(X, y, alpha=1.0, n_iterations=100):
     def fit_ridge(X, y):
-        ridge = rustkit.RidgeRegression(alpha, True)
+        ridge = SklearnRidgeRegression(alpha=1.0, fit_intercept=True)
         ridge.fit(X, y)
         return ridge
     
@@ -61,7 +65,7 @@ def benchmark_ridge(X, y, alpha=1.0, n_iterations=100):
 
 def benchmark_r2(y_true, y_pred, n_iterations=100):
     def compute_r2(y_true, y_pred):
-        return rustkit.R2Score.compute(y_true, y_pred)
+        return r2_score(y_true, y_pred)
     
     total_time = 0
     
@@ -77,7 +81,7 @@ def benchmark_r2(y_true, y_pred, n_iterations=100):
 
 def benchmark_mse(y_true, y_pred, n_iterations=100):
     def compute_mse(y_true, y_pred):
-        return rustkit.MSE.compute(y_true, y_pred)
+        return np.mean((y_true - y_pred)**2)
     
     total_time = 0
     
@@ -94,7 +98,7 @@ def benchmark_mse(y_true, y_pred, n_iterations=100):
 
 def benchmark_kmeans_random(X, n_clusters=10, n_iterations=100):
     def fit_kmeans(X):
-        kmeans = rustkit.KMeans(n_clusters, "random", 200, 10)
+        kmeans = SklearnKMeans(n_clusters=n_clusters, init="random")
         kmeans.fit(X)
         return kmeans
     
@@ -112,7 +116,7 @@ def benchmark_kmeans_random(X, n_clusters=10, n_iterations=100):
 
 def benchmark_kmeans(X, n_clusters=10, n_iterations=100):
     def fit_kmeans(X):
-        kmeans = rustkit.KMeans(n_clusters, "kmeans++", 200, 10)
+        kmeans = SklearnKMeans(n_clusters)
         kmeans.fit(X)
         return kmeans
     
@@ -131,7 +135,7 @@ def benchmark_kmeans(X, n_clusters=10, n_iterations=100):
 def run_benchmark(nrows, ncols, filename):
     X = np.random.rand(nrows, ncols)
     # FLAG: fix when bug is fixed
-    X_clustered = make_blobs(n_samples=nrows, n_features=10, centers=10, random_state=42)[0]
+    X_clustered = make_blobs(n_samples=nrows, n_features=3, centers=3, random_state=42)[0]
     y = np.random.rand(nrows)
     y_true = np.random.rand(nrows)
     y_pred = np.random.rand(nrows)
@@ -141,10 +145,10 @@ def run_benchmark(nrows, ncols, filename):
     ridge_time = benchmark_ridge(X, y)
     r2_time = benchmark_r2(y_true, y_pred)
     mse_time = benchmark_mse(y_true, y_pred)
-    kmeans_time = benchmark_kmeans(X_clustered)
-    kmeans_random_time = benchmark_kmeans_random(X_clustered)
+    kmeans_time = benchmark_kmeans(X_clustered, n_clusters=3)
+    kmeans_random_time = benchmark_kmeans_random(X_clustered, n_clusters=3)
     
-    with open(filename, "a") as f:
+    with open(filename, "w") as f:
         f.write(f"PCA::fit_transform,{nrows},{ncols},{pca_time}\n")
         f.write(f"StandardScaler::fit_transform,{nrows},{ncols},{standard_scaler_time}\n")
         f.write(f"RidgeRegression::fit,{nrows},{ncols},{ridge_time}\n")

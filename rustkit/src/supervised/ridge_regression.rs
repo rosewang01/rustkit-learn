@@ -82,7 +82,12 @@ impl RidgeRegression {
     ) -> PyResult<()> {
         let x = python_to_rust_dynamic_matrix(&data);
         let y = python_to_rust_dynamic_vector(&target);
-        let result = log_function_time(|| self.fit_helper(&x, &y), "RidgeRegression::fit");
+        let result = log_function_time(
+            || self.fit_helper(&x, &y),
+            "RidgeRegression::fit",
+            x.nrows(),
+            x.ncols(),
+        );
         match result {
             Ok(_) => Ok(()),
             Err(e) => Err(PyValueError::new_err(e)),
@@ -92,8 +97,14 @@ impl RidgeRegression {
     /// Predicts target values for the given input data.
     pub fn predict(&self, py: Python, data: PyReadonlyArray2<f64>) -> PyResult<Py<PyArray1<f64>>> {
         let x = python_to_rust_dynamic_matrix(&data);
-        let predictions =
-            log_function_time(|| self.predict_helper(&x), "RidgeRegression::predict").unwrap();
+        let (nrows, ncols) = x.shape();
+        let predictions = log_function_time(
+            || self.predict_helper(&x),
+            "RidgeRegression::predict",
+            nrows,
+            ncols,
+        )
+        .unwrap();
         rust_to_python_dynamic_vector(py, predictions)
     }
 }

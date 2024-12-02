@@ -58,9 +58,12 @@ impl Imputer {
         data: PyReadonlyArray2<f64>,
     ) -> PyResult<Py<PyArray2<f64>>> {
         let rust_data = python_to_rust_opt_dynamic_matrix(&data);
+        let shape = rust_data.shape();
         let transformed_data = log_function_time(
             || self.fit_transform_helper(&rust_data),
             "Imputer::fit_transform",
+            shape.0,
+            shape.1,
         )
         .unwrap();
         match transformed_data {

@@ -22,6 +22,8 @@ impl R2Score {
         let result = log_function_time(
             || R2Score::compute_helper(&rust_y_true, &rust_y_pred),
             "R2Score::compute",
+            1,
+            rust_y_true.len(),
         )
         .unwrap();
         Ok(PyFloat::new(py, result).into())
@@ -84,6 +86,8 @@ impl MSE {
         let result = log_function_time(
             || MSE::compute_helper(&rust_y_true, &rust_y_pred),
             "MSE::compute",
+            1,
+            rust_y_true.len(),
         )
         .unwrap();
         Ok(PyFloat::new(py, result).into())

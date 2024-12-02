@@ -33,6 +33,8 @@ impl PCA {
         let result = log_function_time(
             || self.fit_helper(&x, n_components.abs() as usize),
             "PCA::fit",
+            x.nrows(),
+            x.ncols(),
         );
         match result {
             Ok(_) => Ok(()),
@@ -46,8 +48,13 @@ impl PCA {
         data: PyReadonlyArray2<f64>,
     ) -> PyResult<Py<PyArray2<f64>>> {
         let x = python_to_rust_dynamic_matrix(&data);
-        let transformed_data =
-            log_function_time(|| self.transform_helper(&x), "PCA::transform").unwrap();
+        let transformed_data = log_function_time(
+            || self.transform_helper(&x),
+            "PCA::transform",
+            x.nrows(),
+            x.ncols(),
+        )
+        .unwrap();
         rust_to_python_dynamic_matrix(py, transformed_data)
     }
 
@@ -61,6 +68,8 @@ impl PCA {
         let transformed_data = log_function_time(
             || self.fit_transform_helper(&x, n_components.abs() as usize),
             "PCA::fit_transform",
+            x.nrows(),
+            x.ncols(),
         )
         .unwrap();
         rust_to_python_dynamic_matrix(py, transformed_data)
@@ -75,6 +84,8 @@ impl PCA {
         let original_data = log_function_time(
             || self.inverse_transform_helper(&x),
             "PCA::inverse_transform",
+            x.nrows(),
+            x.ncols(),
         )
         .unwrap();
         rust_to_python_dynamic_matrix(py, original_data)

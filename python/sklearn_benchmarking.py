@@ -8,7 +8,7 @@ from sklearn.linear_model import Ridge as SklearnRidgeRegression
 from sklearn.cluster import KMeans as SklearnKMeans
 from sklearn.datasets import make_blobs
 
-def benchmark_pca(X, n_components=2, n_iterations=100):
+def benchmark_pca(X, n_components=2, n_iterations=10):
     def fit_pca(X):
         pca = SklearnPCA(n_components)
         return pca.fit_transform(X)
@@ -26,7 +26,7 @@ def benchmark_pca(X, n_components=2, n_iterations=100):
     return average_time
 
 
-def benchmark_standard_scaler(X, n_iterations=100):
+def benchmark_standard_scaler(X, n_iterations=10):
     def fit_standard_scaler(X):
         scaler = SklearnStandardScaler()
         return scaler.fit_transform(X)
@@ -44,7 +44,7 @@ def benchmark_standard_scaler(X, n_iterations=100):
     return average_time
 
 
-def benchmark_ridge(X, y, alpha=1.0, n_iterations=100):
+def benchmark_ridge(X, y, alpha=1.0, n_iterations=10):
     def fit_ridge(X, y):
         ridge = SklearnRidgeRegression(alpha=1.0, fit_intercept=True)
         ridge.fit(X, y)
@@ -63,7 +63,7 @@ def benchmark_ridge(X, y, alpha=1.0, n_iterations=100):
     return average_time
 
 
-def benchmark_r2(y_true, y_pred, n_iterations=100):
+def benchmark_r2(y_true, y_pred, n_iterations=10):
     def compute_r2(y_true, y_pred):
         return r2_score(y_true, y_pred)
     
@@ -79,7 +79,7 @@ def benchmark_r2(y_true, y_pred, n_iterations=100):
     print(f"R² Score Average Time: {average_time:.4f}s")
     return average_time
 
-def benchmark_mse(y_true, y_pred, n_iterations=100):
+def benchmark_mse(y_true, y_pred, n_iterations=10):
     def compute_mse(y_true, y_pred):
         return np.mean((y_true - y_pred)**2)
     
@@ -96,7 +96,7 @@ def benchmark_mse(y_true, y_pred, n_iterations=100):
     return average_time
 
 
-def benchmark_kmeans_random(X, n_clusters=10, n_iterations=100):
+def benchmark_kmeans_random(X, n_clusters=10, n_iterations=10):
     def fit_kmeans(X):
         kmeans = SklearnKMeans(n_clusters=n_clusters, init="random")
         kmeans.fit(X)
@@ -114,7 +114,7 @@ def benchmark_kmeans_random(X, n_clusters=10, n_iterations=100):
     print(f"KMeans - Random Init Average Time: {average_time:.4f}s")
     return average_time
 
-def benchmark_kmeans(X, n_clusters=10, n_iterations=100):
+def benchmark_kmeans(X, n_clusters=10, n_iterations=10):
     def fit_kmeans(X):
         kmeans = SklearnKMeans(n_clusters)
         kmeans.fit(X)
@@ -158,8 +158,8 @@ def run_benchmark(nrows, ncols, filename):
 
 
 def main():
-    nrows = [10, 100, 1000]
-    ncols = [10, 100, 1000]
+    nrows = [10, 50, 100, 250, 500, 750, 1000]
+    ncols = [10, 50, 100, 250, 500, 750, 1000]
     filename = "sklearn_benchmarking.csv"
     for i in range(len(nrows)):
         run_benchmark(nrows[i], ncols[i], filename)

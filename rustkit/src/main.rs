@@ -176,10 +176,13 @@ fn sample_imputer() {
 
     let mut imputer_mean = Imputer::new("mean", None);
     let mut imputer_cons = Imputer::new("constant", Some(-1.0));
-    match imputer_mean.fit(&data) {
+    match imputer_mean.fit_helper(&data) {
         Ok(()) => {
             println!("Original data:\n{:?}", data);
-            println!("Mean imputed data:\n{}", imputer_mean.transform(&data));
+            println!(
+                "Mean imputed data:\n{}",
+                imputer_mean.transform_helper(&data)
+            );
         }
         Err(e) => eprintln!("Mean imputation error: {}", e),
     }
@@ -208,7 +211,7 @@ fn sample_imputer() {
     println!("Original test data:\n{:?}", test_data);
     println!(
         "Mean imputed test data (fit on original data above):\n{}",
-        imputer_mean.transform(&test_data)
+        imputer_mean.transform_helper(&test_data)
     );
 }
 

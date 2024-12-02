@@ -5,7 +5,6 @@ use numpy::{PyArray2, PyReadonlyArray2};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::Python;
-use std::collections::HashMap;
 use std::fmt;
 
 #[derive(Debug)]
@@ -34,7 +33,7 @@ pub enum ImputationType {
 #[pyclass]
 pub struct Imputer {
     strategy: ImputationType,
-    impute_values: Option<HashMap<usize, f64>>,
+    impute_values: Option<Vec<f64>>,
 }
 
 // Performs imputation on a matrix of Option<f64>. Necessary when importing datasets with null entries (e.g. Python)
@@ -83,13 +82,7 @@ impl Imputer {
             shape.1,
         )
         .unwrap();
-        match transformed_data {
-            Ok(data) => rust_to_python_dynamic_matrix(py, data),
-            Err(e) => Err(PyValueError::new_err(format!(
-                "Column {} has no non-missing values to compute the mean.",
-                e.column_index,
-            ))),
-        }
+        rust_to_python_dynamic_matrix(py, transformed_data)
     }
 
     pub fn fit_transform(
@@ -122,10 +115,12 @@ impl Imputer {
         data: &DMatrix<Option<f64>>,
     ) -> Result<DMatrix<f64>, ImputerError> {
         // Call `fit` and propagate errors if any
-        self.fit_helper(data)?;
+        let result = self.fit_helper(data);
 
-        // If `fit` succeeds, call `transform` (which assumes fitting has already been done)
-        Ok(self.transform_helper(data))
+        match result {
+            Ok(_) => Ok(self.transform_helper(data)),
+            Err(e) => Err(e),
+        }
     }
 
     /// Fits the imputer to the data, computing imputation values for each column.

@@ -178,8 +178,14 @@ def test_mse_correctness(y_true, y_pred):
 
 def test_imputer(X):
     np.random.seed(42)
-    missing_mask = np.random.rand(*X.shape) < 0.1  # Randomly make 10% of the data missing
-    X_with_missing = X.mask(missing_mask)
+    total_entries = X.size
+
+    n_nan = int(total_entries * 0.1)
+    nan_indices = np.random.choice(total_entries, n_nan, replace=False)
+
+    X_flattened = X.flatten()
+    X_flattened[nan_indices] = np.nan
+    X_with_missing = X_flattened.reshape(X.shape)
 
     imputer = SimpleImputer(strategy='mean')
     sk_imputed = imputer.fit_transform(X_with_missing)

@@ -16,7 +16,7 @@ use unsupervised::kmeans::KMeans;
 use unsupervised::pca::PCA;
 
 pub mod converters;
-use converters::{converter_matrix_test, converter_vector_test};
+use converters::{converter_matrix_opt_test, converter_matrix_test, converter_vector_test};
 
 pub mod benchmarking;
 
@@ -32,6 +32,7 @@ fn rustkit(_py: Python, m: &PyModule) -> PyResult<()> {
 
     m.add_function(wrap_pyfunction!(converter_vector_test, m)?)?;
     m.add_function(wrap_pyfunction!(converter_matrix_test, m)?)?;
+    m.add_function(wrap_pyfunction!(converter_matrix_opt_test, m)?)?;
 
     Ok(())
 }

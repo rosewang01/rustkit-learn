@@ -22,10 +22,12 @@ fn main() {
     sample_ridge();
     print!("\n \n");
     sample_r2();
-    print!("\n \n");
-    sample_imputer();
+
     print!("\n \n");
     sample_kmeans();
+
+    print!("\n \n");
+    sample_imputer();
 }
 
 fn sample_ridge() {
@@ -158,7 +160,7 @@ fn sample_imputer() {
     println!("=============================================================================");
     let data = DMatrix::from_row_slice(
         3,
-        3,
+        2,
         &[
             Some(1.0),
             None,
@@ -172,21 +174,45 @@ fn sample_imputer() {
         ],
     );
 
-    let imputer_mean = Imputer::new("mean", None);
-    let imputer_cons = Imputer::new("constant", Some(-1.0));
-    match imputer_mean.fit_transform_helper(&data) {
-        Ok(imputed_data) => {
+    let mut imputer_mean = Imputer::new("mean", None);
+    let mut imputer_cons = Imputer::new("constant", Some(-1.0));
+    match imputer_mean.fit_helper(&data) {
+        Ok(()) => {
             println!("Original data:\n{:?}", data);
-            println!("Mean imputed data:\n{}", imputed_data);
+            println!(
+                "Mean imputed data:\n{}",
+                imputer_mean.transform_helper(&data)
+            );
         }
         Err(e) => eprintln!("Mean imputation error: {}", e),
     }
     match imputer_cons.fit_transform_helper(&data) {
         Ok(imputed_data) => {
-            println!("Mean imputed data:\n{}", imputed_data);
+            println!("Cons imputed data:\n{}", imputed_data);
         }
         Err(e) => eprintln!("Cons imputation error: {}", e),
     }
+    let test_data = DMatrix::from_row_slice(
+        5,
+        2,
+        &[
+            None,
+            Some(1.0),
+            Some(1.0),
+            None,
+            None,
+            Some(1.0),
+            Some(1.0),
+            None,
+            None,
+            Some(1.0),
+        ],
+    );
+    println!("Original test data:\n{:?}", test_data);
+    println!(
+        "Mean imputed test data (fit on original data above):\n{}",
+        imputer_mean.transform_helper(&test_data)
+    );
 }
 
 fn sample_kmeans() {

@@ -6,6 +6,7 @@ from sklearn.preprocessing import StandardScaler as SklearnStandardScaler
 from sklearn.linear_model import Ridge as SklearnRidgeRegression
 from sklearn.cluster import KMeans as SklearnKMeans
 from sklearn.datasets import make_blobs
+from sklearn.impute import SimpleImputer
 
 def get_pca_equality(sklearn_result, rustkit_result):
     # check col wise if values are equal or -1 * the other col
@@ -175,6 +176,32 @@ def test_mse_correctness(y_true, y_pred):
     # assert abs(sklearn_mse - rustkit_mse) < 1e-5, "MSE results differ!"
     # print("MSE correctness test passed!")
 
+def test_imputer(X):
+    np.random.seed(42)
+    total_entries = X.size
+
+    n_nan = int(total_entries * 0.1)
+    nan_indices = np.random.choice(total_entries, n_nan, replace=False)
+
+    X_flattened = X.flatten()
+    X_flattened[nan_indices] = np.nan
+    X_with_missing = X_flattened.reshape(X.shape)
+
+    imputer = SimpleImputer(strategy='mean')
+    sk_imputed = imputer.fit_transform(X_with_missing)
+
+    imputer = rustkit.Imputer("mean")
+    rustkit_imputed = imputer.fit_transform(X_with_missing)
+
+    if (np.allclose(sk_imputed, rustkit_imputed, atol=1e-5)):
+        print("Imputer correctness test passed!")
+    else:
+        print("Imputer correctness test failed!")
+        print("Sklearn Imputer result:")
+        print(sk_imputed)
+        print("Rustkit Imputer result:")
+        print(rustkit_imputed)
+
 
 def test_empty_input():
     print("EMPTY INPUT")
@@ -210,12 +237,13 @@ def test_single_input():
     y = np.array([1.0])
     y_pred = np.array([2.0])
 
-    
-    test_standard_scaler_correctness(X)
+    # not well defined with single input
+    # test_standard_scaler_correctness(X)
+    # test_r2_correctness(y_pred, y)
+    # test_mse_correctness(y_pred, y)
+    # test_pca_correctness(X)
+    # test_imputer(X)
     test_ridge_correctness(X, y)
-    test_r2_correctness(y_pred, y)
-    test_mse_correctness(y_pred, y)
-    test_pca_correctness(X)
     test_kmeans_correctness(X)
 
 def test_large_input():
@@ -233,6 +261,7 @@ def test_large_input():
     test_mse_correctness(y_pred, y_true)
     test_pca_correctness(X)
     test_kmeans_correctness(X_clustered)
+    test_imputer(X)
 
 def test_negative_input():
     print("NEGATIVE INPUT")
@@ -249,6 +278,7 @@ def test_negative_input():
     test_mse_correctness(y_pred, y_true)
     test_pca_correctness(X)
     test_kmeans_correctness(X_clustered)
+    test_imputer(X)
 
 def test_mixed_input():
     print("MIXED INPUT")
@@ -267,6 +297,7 @@ def test_mixed_input():
     test_mse_correctness(y_pred, y_true)
     test_pca_correctness(X)
     test_kmeans_correctness(X_clustered)
+    test_imputer(X)
 
 def main():
     # test_empty_input()

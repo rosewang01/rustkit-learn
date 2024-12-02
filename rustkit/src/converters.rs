@@ -51,7 +51,8 @@ pub fn python_to_rust_opt_dynamic_matrix(array: &PyReadonlyArray2<f64>) -> DMatr
     let shape = matrix.shape();
     let rows = shape[0];
     let cols = shape[1];
-    let elements = matrix.iter().cloned().collect::<Vec<_>>();
+    let matrix_transposed = matrix.t();
+    let elements = matrix_transposed.iter().cloned().collect::<Vec<_>>();
     DMatrix::from_iterator(
         rows,
         cols,
@@ -159,4 +160,14 @@ pub fn converter_matrix_test(
     let rust_matrix = python_to_rust_dynamic_matrix(&matrix);
     println!("{:?}", rust_matrix);
     rust_to_python_dynamic_matrix(py, rust_matrix)
+}
+
+#[pyfunction]
+pub fn converter_matrix_opt_test(
+    py: Python,
+    matrix: PyReadonlyArray2<f64>,
+) -> PyResult<Py<PyArray2<f64>>> {
+    let rust_matrix = python_to_rust_opt_dynamic_matrix(&matrix);
+    println!("{:?}", rust_matrix);
+    rust_to_python_opt_dynamic_matrix(py, rust_matrix)
 }

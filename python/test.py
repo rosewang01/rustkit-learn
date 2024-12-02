@@ -35,6 +35,29 @@ def test_converter_matrix():
     assert np.array_equal(input_matrix, result_matrix), "Test failed! Input and output matrices are not equal."
     print("Matrix test passed!")
 
+def test_converter_opt_matrix():
+    print("=" * 77)
+    print("NULL VAL MATRIX TEST")
+    print("=" * 77)
+    input_matrix = np.array([[1.0, np.nan, 3.0], [4.0, 5.0, np.nan]])
+    
+    result = rustkit.converter_matrix_opt_test(input_matrix)
+    
+    result_matrix = np.array(result)
+    
+    print("Input matrix:")
+    print(input_matrix)
+    print("Result matrix:")
+    print(result_matrix)
+    
+    for i in range(input_matrix.shape[0]):
+        for j in range(input_matrix.shape[1]):
+            if np.isnan(input_matrix[i][j]):
+                assert np.isnan(result_matrix[i][j]), "Test failed! NaN values are not equal."
+            else:
+                assert input_matrix[i][j] == result_matrix[i][j], "Test failed! Values are not equal."
+    print("Null val matrix test passed!")
+
 def sample_scaler():
     print("=" * 77)
     print("STANDARD SCALER EXAMPLE")
@@ -159,6 +182,8 @@ if __name__ == "__main__":
     test_converter_vector()
     print("\n\n")
     test_converter_matrix()
+    print("\n\n")
+    test_converter_opt_matrix()
     print("\n\n")
     sample_scaler()
     print("\n\n")

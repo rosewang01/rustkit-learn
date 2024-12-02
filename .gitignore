@@ -1,3 +1,4 @@
 /rustkit/target
 /rustkit/rustkit
 /python/__pycache__
+/python/timing_log.csv

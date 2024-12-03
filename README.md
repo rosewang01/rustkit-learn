@@ -72,8 +72,8 @@ rustkit
 
 Create a Python environment with at least Python 3.10, and `pip intall maturin`. For help with this, use the following to create a conda environment with the necessary requirmentes:
 
-- `python/env/environment.yml` and the command `conda env create -f environment.yml python=3.10` to install the necessary requirements
-- `python/env/environment.yml` and the command `conda create -n <environment-name> --file req.txt python=3.10`
+- `python/env/environment.yml` - Use the command `conda env create -n <environment-name> -f environment.yml python=3.10` to install the necessary requirements
+- `python/env/req.txt` - Use the command `conda create -n <environment-name> -f req.txt python=3.10`
 
 ### Building the Library
 

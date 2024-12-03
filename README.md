@@ -4,7 +4,7 @@
 
 ## Overview
 
-`rustkit` is a data science library written in Rust, callable from Python, and inspired by `Scikit-Learn`. The underlying Rust implementation relies on the `nalegbra` crate for fast linear algebra and matrix/vector data structures. Like Scikit-Learn, methods are defined through classes (structs) and tend to follow a fit-transform or fit-predict approach for the model (for our supervised, unsupervised, and preprocessing models). Additionally we provide some structs to define testing methods (such as R^2) score etc.
+`rustkit` is a data science library written in Rust, callable from Python, and inspired by `Scikit-Learn`. The underlying Rust implementation relies on the `nalegbra` crate for fast linear algebra and matrix/vector data structures. Like Scikit-Learn, methods are defined through classes (structs) and tend to follow a fit-transform or fit-predict approach for the model (for our supervised, unsupervised, and preprocessing models). Additionally we provide some structs to define testing methods (such as R^2) score etc. See this [presentation](python/presentation.ipynb) for a more detailed overview of benchmarking and accuracy results, as well as examples of calling `rustkit` from Python.
 
 This project includes Python bindings using `maturin` and `PyO3` to use these methods and classes as a library in Python, called `rustkit`. To do so, we implemented converter functions that converted `numpy` matrices and vectors into `nalgebra` matrices and vectors, handling generic types and null values. More information can be found below on building the library for Python. 
 

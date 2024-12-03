@@ -126,7 +126,7 @@
 
 ```python
 import numpy as np
-from your_module import RidgeRegression
+from ruskit import RidgeRegression
 
 # Create Ridge Regression model
 ridge = RidgeRegression(regularization=1.0, with_bias=True)

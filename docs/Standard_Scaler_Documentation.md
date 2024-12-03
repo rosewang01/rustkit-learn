@@ -93,7 +93,7 @@
 
 ```python
 import numpy as np
-from your_module import StandardScaler
+from rustkit import StandardScaler
 
 # Create and fit scaler
 scaler = StandardScaler()

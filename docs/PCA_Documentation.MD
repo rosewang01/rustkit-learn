@@ -136,7 +136,7 @@
 
 ```python
 import numpy as np
-from your_module import PCA
+from ruskit import PCA
 
 # Create and fit PCA
 pca = PCA()

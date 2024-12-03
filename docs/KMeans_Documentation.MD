@@ -151,7 +151,7 @@
 
 ```python
 import numpy as np
-from your_module import KMeans
+from ruskit import KMeans
 
 # Create KMeans instance
 kmeans = KMeans(k=3, init_method_str="kmeans++", max_iter=100, n_init=5)

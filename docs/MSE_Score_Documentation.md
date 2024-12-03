@@ -41,7 +41,7 @@
 
 ```python
 import numpy as np
-from your_module import MSE
+from ruskit import MSE
 
 # True and predicted values
 y_true = np.array([3.0, -0.5, 2.0, 7.0])

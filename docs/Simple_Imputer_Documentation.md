@@ -82,7 +82,7 @@
 
 ```python
 import numpy as np
-from your_module import Imputer
+from rustkit import Imputer
 
 # Create and fit an imputer
 imputer = Imputer("mean", None)

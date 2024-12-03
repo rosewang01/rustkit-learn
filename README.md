@@ -1,6 +1,48 @@
-# rust-final-proj
+# rustkit
 
 ---
+
+## Overview
+
+`rustkit` is a data science library written in Rust, callable from Python, and inspired by `Scikit-Learn`. The underlying Rust implementation relies on the `nalegbra` crate for fast linear algebra and matrix/vector data structures. Like Scikit-Learn, methods are defined through classes (structs) and tend to follow a fit-transform or fit-predict approach for the model (for our supervised, unsupervised, and preprocessing models). Additionally we provide some structs to define testin methods (such as R^2) score etc.
+
+This project includes Python bindings using `maturin` and `PyO3` to use these methods and classes as a library in Python, called `rustkit`. To do so, we implemented converter functions that converted `numpy` matrices and vectors into `nalgebra` matrices and vectors, handling generic types and null values. More information can be found below on building the library for Python. 
+
+For now, the methods only accept floats (represented as `f64` in Rust). So far, we have implemented the classes below, grouped by type:
+
+- Preprocessing:
+    - Scaler
+    - Imputer
+- Supervised
+    - Ridge Regression
+    - With the following Regression Metrics:
+        - $R^2$
+        - MSE
+- Unsupervised
+    - KMeans
+    - PCA
+
+After implementing the methods in Rust, we created Python bindings using `maturin` and `PyO3` to use these methods and classes as a library in Python, called `rustkit`. To do so, we implemented converter functions that converted `numpy` matrices and vectors into `nalgebra` matrices and vectors, handling generic types and null values.
+
+***Note***
+Numpy matrices and pandas dataframes in Python tend to handle `None` or `NaN` entries. In Rust, while we can have null entries by storing our data as a `Option<f64>` matrix, most matrix operations are not implementable on Optional values. Thus all of our methods expect ***non-null*** entries, with the exception of `SimpleImputer` which provides imputation methods to ensure that input data is completely non-null.
+
+
+## Project Structure
+
+This repo contains a folder defining the rustkit [library](rustkit/), as well as a folder containing unit-tests (which compare our output with Sk-learn) and benchmarking in [Python](python/).
+
+### ***rustkit/***
+- `src` contains all of the of the Rust code needed. The core algorithms are organized by type into modules (e.g. preprocessing, supervised, etc.). Documentation for each class can be found below
+- `src/main.rs` prints an example use of all of these algorithms directly in Rust (use `cargo run` from the [rustkit/](rustkit/) folder).
+- ***add exmplanations for lib, converter, and benchmarking***
+
+
+### ***python/***
+- ***briefly give an overview of this folder****.
+
+
+
 
 ## Building the Library
 

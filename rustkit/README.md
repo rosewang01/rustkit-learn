@@ -17,3 +17,27 @@
   from .rustkit import __all__
   ```
   - Within your python module, import and use rustkit as follows: `from rustkit import StandardScaler` or `import rustkit`
+
+
+## Documentation
+
+The underlying data science algorithms are implemented in Rust and rely heavily on the `nalgebra` crate. Below is the documentation for the classes currently available in this project. Each documentation page separates the methods into the external methods (those intended for Python integration) and internal methods (the Rust code to actually run the algorithms / update parameters). Classes are grouped by their type.
+
+### **Preprocessing**
+
+- [SimpleImputer](docs/Simple_Imputer_Documentation.md)
+- [StandardScaler](docs/Standard_Scaler_Documentation.md)
+
+### **Unsupervised**
+
+- [KMeans](docs/KMeans_Documentation.MD)
+- [PCA](docs/PCA_Documentation.MD)
+
+### **Supervised**
+
+- [RidgeRegression](docs/Ridge_Regression_Documentation.md)
+
+### **Testing**
+
+- [R2Score](docs/R2_Score_Documentation.md)
+- [MSE](docs/MSE_Score_Documentation.md)

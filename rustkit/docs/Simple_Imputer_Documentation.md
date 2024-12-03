@@ -1,122 +1,104 @@
-# Rustkit `Imputer` Class Documentation
+# Imputer
 
-This documentation describes the `Imputer` class. The `Imputer` provides strategies to handle missing values, such as replacing them with the mean of a column or a constant value. The functions can be called on Python data, while the corresponding functions with a `_helper` suffix operate directly in Rust and are used as subroutines for the Python methods.
+`Imputer` is a Rust implementation of a data imputation utility inspired by Scikit-learn. It allows replacing missing values in a dataset using a specified imputation strategy. This implementation integrates with Python via PyO3 and Maturin.
 
 ---
 
-## **Structs**
+## Class Definition
 
 ### `Imputer`
-
-The main struct for handling imputation tasks. It allows imputing missing values in datasets with configurable strategies.
-
-#### **Fields**
-
-- `strategy`: `ImputationType`  
-   The imputation strategy to use (e.g., mean imputation or constant value imputation).
+- **Fields**:
+  - `strategy`: Imputation strategy, either `Mean` or `Constant(f64)`.
+  - `impute_values`: Optional vector of computed imputation values for each column.
 
 ---
 
-### `ImputerError`
+## Methods (callable from Python)
 
-An error type representing a failure in the imputation process, specifically when a column lacks non-missing values required for mean imputation.
-
-#### **Fields**
-
-- `column_index`: `usize`  
-   The index of the column where the error occurred.
-
-#### **Traits Implemented**
-
-- `fmt::Display`  
-  Provides a user-friendly error message indicating the column with the issue.
-- `std::error::Error`  
-  Implements the `Error` trait for compatibility with error-handling idioms.
+### `new(strategy: &str, value: Option<f64>) -> Self`
+- **Description**: Creates a new instance of `Imputer` with the specified imputation strategy.
+- **Parameters**:
+  - `strategy`: The imputation strategy. Accepted values:
+    - `"mean"`: Replace missing values with the mean of the column.
+    - `"constant"`: Replace missing values with a constant value.
+  - `value`: The constant value for the `"constant"` strategy. Ignored if the strategy is `"mean"`.
+- **Returns**: `Imputer` object.
 
 ---
 
-## **Enums**
-
-### `ImputationType`
-
-Represents the strategy to use for imputing missing values. When calling from Python, imputation strategy should be passed as a string: 'mean' or 'constant'.
-
-#### **Variants**
-
-- `Mean`  
-  Impute missing values with the mean of the non-missing values in the column.
-
-- `Constant(f64)`  
-  Impute missing values with a specified constant value.
+### `fit(data: PyReadonlyArray2<f64>) -> PyResult<()>`
+- **Description**: Computes the imputation values for each column in the dataset.
+- **Parameters**:
+  - `data`: 2D NumPy array of shape `(n_samples, n_features)`. Missing values should be represented as `NaN`.
+- **Returns**: `Ok(())` on success, `Err(PyValueError)` if an error occurs.
 
 ---
 
-## **Methods**
+### `transform(py: Python, data: PyReadonlyArray2<f64>) -> PyResult<Py<PyArray2<f64>>>`
+- **Description**: Imputes missing values in the input dataset using the precomputed values (assumes fit has already been called).
+- **Parameters**:
+  - `py`: Python GIL token.
+  - `data`: 2D NumPy array of shape `(n_samples, n_features)`.
+- **Returns**: Imputed data as a 2D NumPy array.
 
-### `Imputer::new`
+---
 
-Creates a new `Imputer` instance with the specified imputation strategy.
+### `fit_transform(py: Python, data: PyReadonlyArray2<f64>) -> PyResult<Py<PyArray2<f64>>>`
+- **Description**: Computes the imputation values and imputes missing values in the input dataset.
+- **Parameters**:
+  - `py`: Python GIL token.
+  - `data`: 2D NumPy array of shape `(n_samples, n_features)`.
+- **Returns**: Imputed data as a 2D NumPy array.
 
-#### **Signature**
+---
 
-```rust
-pub fn new(strategy: ImputationType) -> Self
+## Internal Methods (Rust Implementation)
+
+### `fit_helper(data: &DMatrix<Option<f64>>) -> Result<(), ImputerError>`
+- **Description**: Computes the imputation values for each column based on the specified strategy.
+- **Parameters**:
+  - `data`: Dynamic matrix of optional values representing the dataset.
+- **Returns**: `Ok(())` on success, `Err(ImputerError)` if a column contains only missing values.
+
+---
+
+### `transform_helper(data: &DMatrix<Option<f64>>) -> DMatrix<f64>`
+- **Description**: Imputes missing values in the input data using precomputed imputation values.
+- **Parameters**:
+  - `data`: Dynamic matrix of optional values representing the dataset.
+- **Returns**: Imputed data as a dynamic matrix.
+
+---
+
+### `fit_transform_helper(data: &DMatrix<Option<f64>>) -> Result<DMatrix<f64>, ImputerError>`
+- **Description**: Combines `fit_helper` and `transform_helper` to compute and impute missing values.
+- **Parameters**:
+  - `data`: Dynamic matrix of optional values representing the dataset.
+- **Returns**: Imputed data as a dynamic matrix, or an error if a column contains only missing values.
+
+---
+
+## Example Usage (Python)
+
+```python
+import numpy as np
+from your_module import Imputer
+
+# Create and fit an imputer
+imputer = Imputer("mean", None)
+data = np.array([[1.0, 2.0, np.nan], [3.0, np.nan, 6.0], [7.0, 8.0, 9.0]])
+imputer.fit(data)
+
+# Transform data
+transformed = imputer.transform(data)
+
+# Fit and transform in one step
+fit_transformed = imputer.fit_transform(data)
 ```
-
-#### **Parameters**
-
-- `strategy`: `ImputationType`  
-   The strategy to use for imputing missing values.
-
-#### **Returns**
-
-- An `Imputer` instance configured with the given strategy.
-
----
-
-### `Imputer::fit_transform`
-
-Performs the imputation on a dataset represented as a matrix of optional floating-point numbers (`DMatrix<Option<f64>>`).
-
----
-
-## **Usage Example (in Rust)**
-
-```rust
-use nalgebra::DMatrix;
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Example dataset with missing values (None)
-    let data = DMatrix::from_vec(
-        3,
-        3,
-        vec![
-            Some(1.0), None, Some(3.0),
-            None, None, Some(6.0),
-            Some(7.0), Some(8.0), None,
-        ],
-    );
-
-    // Create an imputer with the mean strategy
-    let imputer = Imputer::new(ImputationType::Mean);
-
-    // Perform the imputation
-    let transformed = imputer.fit_transform_helper(&data)?;
-
-    println!("Imputed Data:\n{}", transformed);
-
-    Ok(())
-}
-```
-
----
-
-## **Error Handling**
-
-When using the `fit_transform` method with the `Mean` strategy, ensure that each column has at least one non-missing value. If a column is entirely missing, the method will return an `ImputerError` with the problematic column index.
-
----
 
 ## **Notes**
 
-- The `Imputer` currently supports only mean and constant value imputation, as defined in the enum.
+- The "mean" strategy computes the mean of non-missing values in each column.
+- The "constant" strategy replaces missing values with a specified constant value.
+- Missing values in the input data must be represented as `NaN` for compatibility with NumPy.
+- Columns with all missing values will raise an `ImputerError` during fitting with the "mean" strategy.
